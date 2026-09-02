@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Hangar Location</string>
+    <string name="title_activity_main">Hangar Location</string>
+    <string name="package_name">com.hangar.location</string>
+    <string name="custom_url_scheme">com.hangar.location</string>
+</resources>
