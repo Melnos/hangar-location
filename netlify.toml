@@ -2,6 +2,9 @@
   command = "pnpm run build"
   publish = ".next"
 
+[build.environment]
+  DATABASE_URL = "postgresql://neondb_owner:npg_53JwYSDxaqeI@ep-dawn-bar-aecdxfuj-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
