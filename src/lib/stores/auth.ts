@@ -47,6 +47,13 @@ export const useAuthStore = create<AuthState>()(
 
           await db.users.update(user.id, { lastLogin: new Date().toISOString() });
 
+          await db.vehicules.clear();
+          await db.locataires.clear();
+          await db.contrats.clear();
+          await db.documents_vehicule.clear();
+          await db.maintenances.clear();
+          await db.notifications.clear();
+
           set({
             isAuthenticated: true,
             userId: user.id,
@@ -68,6 +75,13 @@ export const useAuthStore = create<AuthState>()(
           if (existing) {
             return { success: false, error: 'Nom d\'utilisateur déjà pris' };
           }
+
+          await db.vehicules.clear();
+          await db.locataires.clear();
+          await db.contrats.clear();
+          await db.documents_vehicule.clear();
+          await db.maintenances.clear();
+          await db.notifications.clear();
 
           const id = uuidv4();
           const now = new Date().toISOString();
@@ -94,7 +108,15 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      logout: () => set({ isAuthenticated: false, userId: null, username: '', token: null }),
+      logout: () => {
+        db.vehicules.clear();
+        db.locataires.clear();
+        db.contrats.clear();
+        db.documents_vehicule.clear();
+        db.maintenances.clear();
+        db.notifications.clear();
+        set({ isAuthenticated: false, userId: null, username: '', token: null });
+      },
 
       setUsername: (username) => set({ username }),
       setLastSync: (date) => set({ lastSync: date }),

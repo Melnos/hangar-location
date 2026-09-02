@@ -49,6 +49,9 @@ export const syncService = {
       });
 
       if (!response.ok) {
+        if (response.status === 404) {
+          return { success: false, message: 'Synchronisation serveur non disponible' };
+        }
         throw new Error(`Erreur serveur: ${response.status}`);
       }
 
@@ -89,6 +92,9 @@ export const syncService = {
       });
 
       if (!response.ok) {
+        if (response.status === 404) {
+          return { success: false, message: 'Synchronisation serveur non disponible' };
+        }
         throw new Error(`Erreur serveur: ${response.status}`);
       }
 
