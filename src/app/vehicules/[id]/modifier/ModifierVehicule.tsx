@@ -1,14 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Header, Input, Button } from '@/components';
 import { vehiculeRepository } from '@/repositories';
 import type { StatutVehicule } from '@/models';
 
-export default function ModifierVehiculePage() {
+interface Props {
+  params: { id: string };
+}
+
+export default function ModifierVehiculePage({ params }: Props) {
   const router = useRouter();
-  const params = useParams();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     nom: '',
@@ -23,7 +26,7 @@ export default function ModifierVehiculePage() {
 
   useEffect(() => {
     const loadVehicule = async () => {
-      const vehicule = await vehiculeRepository.getById(params.id as string);
+      const vehicule = await vehiculeRepository.getById(params.id);
       if (vehicule) {
         setForm({
           nom: vehicule.nom,
@@ -59,7 +62,7 @@ export default function ModifierVehiculePage() {
 
     setLoading(true);
     try {
-      await vehiculeRepository.update(params.id as string, {
+      await vehiculeRepository.update(params.id, {
         nom: form.nom,
         plaque: form.plaque,
         numero_chassis: form.numero_chassis,

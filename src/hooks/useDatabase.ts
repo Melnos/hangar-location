@@ -46,7 +46,7 @@ export function useNotifications(): Notification[] | undefined {
 
 export function useNotificationsNonLues(): number | undefined {
   return useLiveQuery(
-    () => db.notifications.where('lue').equals(0).count(),
+    () => db.notifications.filter((n) => !n.lue).count(),
     []
   );
 }

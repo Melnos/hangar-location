@@ -13,7 +13,7 @@ export const notificationRepository = {
   },
 
   async getNonLues(): Promise<Notification[]> {
-    return db.notifications.where('lue').equals(0).toArray();
+    return db.notifications.filter((n) => !n.lue).toArray();
   },
 
   async getById(id: string): Promise<Notification | undefined> {

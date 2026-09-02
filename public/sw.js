@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hangar-location-v1';
+const CACHE_NAME = 'hangar-location-v2';
 const STATIC_ASSETS = [
   '/',
   '/dashboard',
@@ -38,14 +38,17 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+  if (url.pathname.startsWith('/_next/')) return;
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
+        if (response.ok) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
         return response;
       })
       .catch(() => {

@@ -283,7 +283,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-900">Nouveau véhicule</p>
                 </div>
               </Link>
-              <Link href="/contrats/nouveau">
+              <Link href="/contrats">
                 <div className="p-4 border border-gray-200 rounded-lg hover:bg-[#e8e8c8] cursor-pointer transition-colors">
                   <svg
                     className="w-8 h-8 text-primary-600 mb-2"
@@ -298,10 +298,10 @@ export default function DashboardPage() {
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <p className="text-sm font-medium text-gray-900">Nouveau contrat</p>
+                  <p className="text-sm font-medium text-gray-900">Contrats</p>
                 </div>
               </Link>
-              <Link href="/locataires/nouveau">
+              <Link href="/locataires">
                 <div className="p-4 border border-gray-200 rounded-lg hover:bg-[#e8e8c8] cursor-pointer transition-colors">
                   <svg
                     className="w-8 h-8 text-primary-600 mb-2"
@@ -316,7 +316,7 @@ export default function DashboardPage() {
                       d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
                     />
                   </svg>
-                  <p className="text-sm font-medium text-gray-900">Nouveau locataire</p>
+                  <p className="text-sm font-medium text-gray-900">Locataires</p>
                 </div>
               </Link>
               <Link href="/vehicules">
