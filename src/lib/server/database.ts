@@ -16,6 +16,7 @@ export interface User {
 export interface DatabaseUser {
   id: string;
   username: string;
+  password: string;
   createdAt: string;
   lastLogin: string | null;
   data: {
@@ -73,6 +74,7 @@ export function createUser(username: string, password: string): { success: boole
   const newUser: DatabaseUser = {
     id: generateId(),
     username,
+    password: hashPassword(password),
     createdAt: new Date().toISOString(),
     lastLogin: null,
     data: {
@@ -125,8 +127,7 @@ export function authenticateUser(username: string, password: string): { success:
     return { success: false, error: 'Identifiants incorrects' };
   }
 
-  const storedUser = db.users.find((u) => u.username === username);
-  if (storedUser && storedUser.id !== user.id) {
+  if (user.password !== hashedPassword) {
     return { success: false, error: 'Identifiants incorrects' };
   }
 
