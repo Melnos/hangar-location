@@ -8,6 +8,14 @@ import type {
   Notification,
 } from '../../models';
 
+export interface User {
+  id: string;
+  username: string;
+  password: string;
+  createdAt: string;
+  lastLogin: string | null;
+}
+
 export class HangarDatabase extends Dexie {
   vehicules!: Table<Vehicule, string>;
   locataires!: Table<Locataire, string>;
@@ -15,6 +23,7 @@ export class HangarDatabase extends Dexie {
   documents_vehicule!: Table<DocumentVehicule, string>;
   maintenances!: Table<Maintenance, string>;
   notifications!: Table<Notification, string>;
+  users!: Table<User, string>;
 
   constructor() {
     super('HangarLocationDB');
@@ -26,6 +35,7 @@ export class HangarDatabase extends Dexie {
       documents_vehicule: 'id, vehicule_id, type, date_expiration, updated_at',
       maintenances: 'id, vehicule_id, type_entretien, seuil_date, updated_at',
       notifications: 'id, type, reference_id, date_declenchement, lue, updated_at',
+      users: 'id, username, password, createdAt, lastLogin',
     });
   }
 }
