@@ -1,8 +1,16 @@
 'use client';
 
+import { useAuthStore } from '@/lib/stores/auth';
 import { Sidebar, FloatingNav, MobileHeader } from '@/components';
+import LoginScreen from '@/components/LoginScreen';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuthStore();
+
+  if (!isAuthenticated) {
+    return <LoginScreen />;
+  }
+
   return (
     <>
       <div className="hidden md:block">

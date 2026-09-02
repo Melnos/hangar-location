@@ -46,13 +46,13 @@ export default function ParametresPage() {
   }, [adminData]);
 
   useEffect(() => {
-    if (syncEnabled && syncServerUrl) {
-      startAutoSync(syncServerUrl, syncInterval);
+    if (syncEnabled) {
+      startAutoSync(syncInterval);
     } else {
       stopAutoSync();
     }
     return () => stopAutoSync();
-  }, [syncEnabled, syncServerUrl, syncInterval]);
+  }, [syncEnabled, syncInterval]);
 
   useEffect(() => {
     notificationService.getPermissionStatus().then((status) => {
@@ -73,30 +73,20 @@ export default function ParametresPage() {
   };
 
   const handleSync = async () => {
-    if (!syncServerUrl) {
-      setSyncStatus('Veuillez configurer l\'URL du serveur');
-      setSyncStatusType('error');
-      return;
-    }
     setIsSyncing(true);
     setSyncStatus('Synchronisation en cours...');
     setSyncStatusType('info');
-    const result = await syncService.syncWithServer(syncServerUrl);
+    const result = await syncService.syncWithServer();
     setSyncStatus(result.message);
     setSyncStatusType(result.success ? 'success' : 'error');
     setIsSyncing(false);
   };
 
   const handleTestConnection = async () => {
-    if (!syncServerUrl) {
-      setSyncStatus('Veuillez configurer l\'URL du serveur');
-      setSyncStatusType('error');
-      return;
-    }
     setIsTestingConnection(true);
     setSyncStatus('Test de connexion...');
     setSyncStatusType('info');
-    const result = await syncService.testConnection(syncServerUrl);
+    const result = await syncService.pullFromServer();
     setSyncStatus(result.message);
     setSyncStatusType(result.success ? 'success' : 'error');
     setIsTestingConnection(false);
@@ -283,30 +273,9 @@ export default function ParametresPage() {
                 {isOnline ? 'En ligne' : 'Hors ligne'}
               </span>
             </div>
-            <Input
-              label="URL du serveur de synchronisation"
-              value={syncServerUrl}
-              onChange={(e) => setSyncServerUrl(e.target.value)}
-              placeholder="https://exemple.com/api"
-            />
-            <Input
-              label="Intervalle de synchronisation (secondes)"
-              type="number"
-              value={syncInterval}
-              onChange={(e) => setSyncInterval(parseInt(e.target.value) || 30)}
-              placeholder="30"
-            />
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={syncEnabled}
-                  onChange={(e) => setSyncEnabled(e.target.checked)}
-                  className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
-                />
-                <span className="text-sm font-medium">Synchronisation automatique</span>
-              </label>
-            </div>
+            <p className="text-sm text-gray-500">
+              La synchronisation sauvegarde vos données sur le serveur. Connectez-vous pour synchroniser automatiquement entre vos appareils.
+            </p>
             <div className="flex flex-wrap gap-3">
               <Button onClick={handleSync} loading={isSyncing}>
                 Synchroniser maintenant
@@ -328,10 +297,6 @@ export default function ParametresPage() {
                 {syncStatus}
               </p>
             )}
-            <p className="text-xs text-gray-500">
-              Les données sont sauvegardées sur le serveur avec vos identifiants.
-              La synchronisation envoie et reçoit les modifications automatiquement.
-            </p>
           </div>
         </div>
 
