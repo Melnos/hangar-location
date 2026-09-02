@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserData, updateUserData } from '@/lib/server/database';
 
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id');
