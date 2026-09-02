@@ -1,9 +1,18 @@
 [build]
   command = "pnpm run build"
-  publish = ".next"
-
-[build.environment]
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+  publish = "out"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
