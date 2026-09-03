@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { db, type User } from '@/lib/db';
+import { hashPassword } from '@/lib/utils/auth';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -25,26 +28,27 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (username: string, password: string) => {
         try {
-          const response = await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'login', username: username.trim(), password }),
-          });
+          const hashedPassword = hashPassword(password);
+          const user = await db.users.where('username').equals(username.trim()).first();
 
-          const result = await response.json();
-
-          if (result.success) {
-            set({
-              isAuthenticated: true,
-              userId: result.user.id,
-              username: result.user.username,
-              token: btoa(`${username.trim()}:${password}`),
-              lastSync: result.user.lastLogin,
-            });
-            return { success: true };
+          if (!user) {
+            return { success: false, error: 'Identifiants incorrects' };
           }
 
-          return { success: false, error: result.error };
+          if (user.password !== hashedPassword) {
+            return { success: false, error: 'Identifiants incorrects' };
+          }
+
+          await db.users.update(user.id, { lastLogin: new Date().toISOString() });
+
+          set({
+            isAuthenticated: true,
+            userId: user.id,
+            username: user.username,
+            token: btoa(`${username.trim()}:${hashedPassword}`),
+            lastSync: user.lastLogin,
+          });
+          return { success: true };
         } catch (error) {
           return { success: false, error: 'Erreur de connexion' };
         }
@@ -52,32 +56,47 @@ export const useAuthStore = create<AuthState>()(
 
       register: async (username: string, password: string) => {
         try {
-          const response = await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'register', username: username.trim(), password }),
-          });
+          const hashedPassword = hashPassword(password);
+          const existing = await db.users.where('username').equals(username.trim()).first();
 
-          const result = await response.json();
-
-          if (result.success) {
-            set({
-              isAuthenticated: true,
-              userId: result.user.id,
-              username: result.user.username,
-              token: btoa(`${username.trim()}:${password}`),
-              lastSync: result.user.createdAt,
-            });
-            return { success: true };
+          if (existing) {
+            return { success: false, error: 'Nom d\'utilisateur déjà pris' };
           }
 
-          return { success: false, error: result.error };
+          const id = uuidv4();
+          const now = new Date().toISOString();
+          const newUser: User = {
+            id,
+            username: username.trim(),
+            password: hashedPassword,
+            createdAt: now,
+            lastLogin: null,
+          };
+
+          await db.users.add(newUser);
+
+          set({
+            isAuthenticated: true,
+            userId: id,
+            username: username.trim(),
+            token: btoa(`${username.trim()}:${hashedPassword}`),
+            lastSync: now,
+          });
+          return { success: true };
         } catch (error) {
           return { success: false, error: 'Erreur de connexion' };
         }
       },
 
-      logout: () => set({ isAuthenticated: false, userId: null, username: '', token: null }),
+      logout: () => {
+        db.vehicules.clear();
+        db.locataires.clear();
+        db.contrats.clear();
+        db.documents_vehicule.clear();
+        db.maintenances.clear();
+        db.notifications.clear();
+        set({ isAuthenticated: false, userId: null, username: '', token: null });
+      },
 
       setUsername: (username) => set({ username }),
       setLastSync: (date) => set({ lastSync: date }),

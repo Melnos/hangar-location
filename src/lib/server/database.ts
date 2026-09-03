@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import crypto from 'crypto';
+import { hashPassword } from '@/lib/utils/auth';
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_53JwYSDxaqeI@ep-dawn-bar-aecdxfuj-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
 
@@ -7,13 +7,35 @@ let pool: Pool | null = null;
 
 function getDb(): Pool {
   if (pool) return pool;
+
   pool = new Pool({
     connectionString,
     ssl: {
       rejectUnauthorized: false,
     },
   });
+
   return pool;
+}
+
+async function initDb(): Promise<Pool> {
+  const db = getDb();
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      lastLogin TEXT
+    )
+  `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS user_data (
+      userId TEXT PRIMARY KEY,
+      data JSONB
+    )
+  `);
+  return db;
 }
 
 export interface User {
@@ -45,37 +67,14 @@ interface Database {
   users: DatabaseUser[];
 }
 
-export function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex');
-}
-
 export function generateId(): string {
+  const crypto = require('crypto');
   return crypto.randomUUID();
-}
-
-export async function initDb(): Promise<void> {
-  const db = getDb();
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      createdAt TEXT NOT NULL,
-      lastLogin TEXT
-    )
-  `);
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS user_data (
-      userId TEXT PRIMARY KEY,
-      data JSONB
-    )
-  `);
 }
 
 export async function createUser(username: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> {
   try {
-    const db = getDb();
-    await initDb();
+    const db = await initDb();
     const hashedPassword = hashPassword(password);
     const id = generateId();
     const now = new Date().toISOString();
@@ -106,8 +105,7 @@ export async function createUser(username: string, password: string): Promise<{ 
 
 export async function authenticateUser(username: string, password: string): Promise<{ success: boolean; error?: string; user?: DatabaseUser }> {
   try {
-    const db = getDb();
-    await initDb();
+    const db = await initDb();
     const hashedPassword = hashPassword(password);
 
     const result = await db.query('SELECT id, username, password, createdAt, lastLogin FROM users WHERE username = $1', [username]);
@@ -163,8 +161,7 @@ export async function authenticateUser(username: string, password: string): Prom
 
 export async function getUserData(userId: string): Promise<DatabaseUser | null> {
   try {
-    const db = getDb();
-    await initDb();
+    const db = await initDb();
     const result = await db.query('SELECT id, username, password, createdAt, lastLogin FROM users WHERE id = $1', [userId]);
     const row = result.rows[0] as User | undefined;
 
@@ -193,10 +190,9 @@ export async function getUserData(userId: string): Promise<DatabaseUser | null> 
 
 export async function updateUserData(userId: string, data: Partial<DatabaseUser['data']>): Promise<{ success: boolean; error?: string }> {
   try {
-    const db = getDb();
-    await initDb();
-    const existing = await db.query('SELECT data FROM user_data WHERE userId = $1', [userId]);
+    const db = await initDb();
 
+    const existing = await db.query('SELECT data FROM user_data WHERE userId = $1', [userId]);
     let mergedData: any = {};
     if (existing.rows.length > 0) {
       mergedData = { ...existing.rows[0].data, ...data };
@@ -217,10 +213,9 @@ export async function updateUserData(userId: string, data: Partial<DatabaseUser[
 
 export async function getAllUsers(): Promise<{ id: string; username: string; createdAt: string; lastLogin: string | null }[]> {
   try {
-    const db = getDb();
-    await initDb();
+    const db = await initDb();
     const result = await db.query('SELECT id, username, createdAt, lastLogin FROM users');
-    return result.rows.map((row) => ({
+    return result.rows.map((row: any) => ({
       id: row.id,
       username: row.username,
       createdAt: row.createdAt,
@@ -233,11 +228,12 @@ export async function getAllUsers(): Promise<{ id: string; username: string; cre
 
 export async function deleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const db = getDb();
-    await initDb();
+    const db = await initDb();
     await db.query('DELETE FROM users WHERE id = $1', [userId]);
     return { success: true };
   } catch {
     return { success: false, error: 'Erreur serveur' };
   }
 }
+
+export { hashPassword };
