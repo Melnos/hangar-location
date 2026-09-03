@@ -1,14 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { db, type User } from '@/lib/db';
-import { v4 as uuidv4 } from 'uuid';
-
-function hashPassword(password: string): string {
-  if (typeof window !== 'undefined' && window.crypto?.subtle) {
-    return btoa(password);
-  }
-  return typeof btoa === 'function' ? btoa(password) : password;
-}
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -34,34 +25,26 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (username: string, password: string) => {
         try {
-          const hashedPassword = hashPassword(password);
-          const user = await db.users.where('username').equals(username.trim()).first();
-
-          if (!user) {
-            return { success: false, error: 'Identifiants incorrects' };
-          }
-
-          if (user.password !== hashedPassword) {
-            return { success: false, error: 'Identifiants incorrects' };
-          }
-
-          await db.users.update(user.id, { lastLogin: new Date().toISOString() });
-
-          await db.vehicules.clear();
-          await db.locataires.clear();
-          await db.contrats.clear();
-          await db.documents_vehicule.clear();
-          await db.maintenances.clear();
-          await db.notifications.clear();
-
-          set({
-            isAuthenticated: true,
-            userId: user.id,
-            username: user.username,
-            token: btoa(`${username.trim()}:${hashedPassword}`),
-            lastSync: user.lastLogin,
+          const response = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'login', username: username.trim(), password }),
           });
-          return { success: true };
+
+          const result = await response.json();
+
+          if (result.success) {
+            set({
+              isAuthenticated: true,
+              userId: result.user.id,
+              username: result.user.username,
+              token: btoa(`${username.trim()}:${password}`),
+              lastSync: result.user.lastLogin,
+            });
+            return { success: true };
+          }
+
+          return { success: false, error: result.error };
         } catch (error) {
           return { success: false, error: 'Erreur de connexion' };
         }
@@ -69,54 +52,32 @@ export const useAuthStore = create<AuthState>()(
 
       register: async (username: string, password: string) => {
         try {
-          const hashedPassword = hashPassword(password);
-          const existing = await db.users.where('username').equals(username.trim()).first();
+          const response = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'register', username: username.trim(), password }),
+          });
 
-          if (existing) {
-            return { success: false, error: 'Nom d\'utilisateur déjà pris' };
+          const result = await response.json();
+
+          if (result.success) {
+            set({
+              isAuthenticated: true,
+              userId: result.user.id,
+              username: result.user.username,
+              token: btoa(`${username.trim()}:${password}`),
+              lastSync: result.user.createdAt,
+            });
+            return { success: true };
           }
 
-          await db.vehicules.clear();
-          await db.locataires.clear();
-          await db.contrats.clear();
-          await db.documents_vehicule.clear();
-          await db.maintenances.clear();
-          await db.notifications.clear();
-
-          const id = uuidv4();
-          const now = new Date().toISOString();
-          const newUser: User = {
-            id,
-            username: username.trim(),
-            password: hashedPassword,
-            createdAt: now,
-            lastLogin: null,
-          };
-
-          await db.users.add(newUser);
-
-          set({
-            isAuthenticated: true,
-            userId: id,
-            username: username.trim(),
-            token: btoa(`${username.trim()}:${hashedPassword}`),
-            lastSync: now,
-          });
-          return { success: true };
+          return { success: false, error: result.error };
         } catch (error) {
           return { success: false, error: 'Erreur de connexion' };
         }
       },
 
-      logout: () => {
-        db.vehicules.clear();
-        db.locataires.clear();
-        db.contrats.clear();
-        db.documents_vehicule.clear();
-        db.maintenances.clear();
-        db.notifications.clear();
-        set({ isAuthenticated: false, userId: null, username: '', token: null });
-      },
+      logout: () => set({ isAuthenticated: false, userId: null, username: '', token: null }),
 
       setUsername: (username) => set({ username }),
       setLastSync: (date) => set({ lastSync: date }),
