@@ -1,5 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { db, type User } from '@/lib/db';
+import { hashPassword } from '@/lib/utils/auth';
+import { v4 as uuidv4 } from 'uuid';
+
+async function clearLocalData() {
+  await db.vehicules.clear();
+  await db.locataires.clear();
+  await db.contrats.clear();
+  await db.documents_vehicule.clear();
+  await db.maintenances.clear();
+  await db.notifications.clear();
+}
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -34,6 +46,7 @@ export const useAuthStore = create<AuthState>()(
           const result = await response.json();
 
           if (result.success) {
+            await clearLocalData();
             set({
               isAuthenticated: true,
               userId: result.user.id,
@@ -45,8 +58,29 @@ export const useAuthStore = create<AuthState>()(
           }
 
           return { success: false, error: result.error };
-        } catch (error) {
-          return { success: false, error: 'Erreur de connexion' };
+        } catch {
+          const hashedPassword = hashPassword(password);
+          const user = await db.users.where('username').equals(username.trim()).first();
+
+          if (!user) {
+            return { success: false, error: 'Identifiants incorrects' };
+          }
+
+          if (user.password !== hashedPassword) {
+            return { success: false, error: 'Identifiants incorrects' };
+          }
+
+          await db.users.update(user.id, { lastLogin: new Date().toISOString() });
+          await clearLocalData();
+
+          set({
+            isAuthenticated: true,
+            userId: user.id,
+            username: user.username,
+            token: btoa(`${username.trim()}:${hashedPassword}`),
+            lastSync: user.lastLogin,
+          });
+          return { success: true };
         }
       },
 
@@ -61,6 +95,7 @@ export const useAuthStore = create<AuthState>()(
           const result = await response.json();
 
           if (result.success) {
+            await clearLocalData();
             set({
               isAuthenticated: true,
               userId: result.user.id,
@@ -72,12 +107,42 @@ export const useAuthStore = create<AuthState>()(
           }
 
           return { success: false, error: result.error };
-        } catch (error) {
-          return { success: false, error: 'Erreur de connexion' };
+        } catch {
+          const hashedPassword = hashPassword(password);
+          const existing = await db.users.where('username').equals(username.trim()).first();
+
+          if (existing) {
+            return { success: false, error: 'Nom d\'utilisateur déjà pris' };
+          }
+
+          const id = uuidv4();
+          const now = new Date().toISOString();
+          const newUser: User = {
+            id,
+            username: username.trim(),
+            password: hashedPassword,
+            createdAt: now,
+            lastLogin: null,
+          };
+
+          await db.users.add(newUser);
+          await clearLocalData();
+
+          set({
+            isAuthenticated: true,
+            userId: id,
+            username: username.trim(),
+            token: btoa(`${username.trim()}:${hashedPassword}`),
+            lastSync: now,
+          });
+          return { success: true };
         }
       },
 
-      logout: () => set({ isAuthenticated: false, userId: null, username: '', token: null }),
+      logout: () => {
+        clearLocalData();
+        set({ isAuthenticated: false, userId: null, username: '', token: null });
+      },
 
       setUsername: (username) => set({ username }),
       setLastSync: (date) => set({ lastSync: date }),
