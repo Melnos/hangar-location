@@ -206,13 +206,24 @@ export async function updateGlobalData(data: Partial<GlobalData>, updatedBy?: st
     const db = await initDb();
     const now = new Date().toISOString();
     const current = await getGlobalData();
+
+    // Merge par id: les enregistrements locaux remplacent ceux du serveur,
+    // mais on conserve les enregistrements serveur absents de la liste locale
+    // afin de ne pas perdre les données des autres utilisateurs.
+    const mergeById = (local: any[], server: any[]): any[] => {
+      const map = new Map<string, any>();
+      (server || []).forEach((r) => { if (r && r.id) map.set(r.id, r); });
+      (local || []).forEach((r) => { if (r && r.id) map.set(r.id, r); });
+      return Array.from(map.values());
+    };
+
     const mergedData: GlobalData = {
-      vehicules: data.vehicules ?? current.vehicules,
-      locataires: data.locataires ?? current.locataires,
-      contrats: data.contrats ?? current.contrats,
-      documents_vehicule: data.documents_vehicule ?? current.documents_vehicule,
-      maintenances: data.maintenances ?? current.maintenances,
-      notifications: data.notifications ?? current.notifications,
+      vehicules: data.vehicules ? mergeById(data.vehicules, current.vehicules) : current.vehicules,
+      locataires: data.locataires ? mergeById(data.locataires, current.locataires) : current.locataires,
+      contrats: data.contrats ? mergeById(data.contrats, current.contrats) : current.contrats,
+      documents_vehicule: data.documents_vehicule ? mergeById(data.documents_vehicule, current.documents_vehicule) : current.documents_vehicule,
+      maintenances: data.maintenances ? mergeById(data.maintenances, current.maintenances) : current.maintenances,
+      notifications: data.notifications ? mergeById(data.notifications, current.notifications) : current.notifications,
       parametres: data.parametres ?? current.parametres,
     };
     await db`INSERT INTO global_data (id, data, updated_at, updated_by) VALUES ('global', ${JSON.stringify(mergedData)}, ${now}, ${updatedBy || null}) ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify(mergedData)}, updated_at = ${now}, updated_by = ${updatedBy || null}`;
