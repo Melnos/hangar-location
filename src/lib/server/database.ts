@@ -1,4 +1,4 @@
-﻿import { neon } from '@neondatabase/serverless';
+import { neon } from '@neondatabase/serverless';
 import { hashPassword } from '@/lib/utils/auth';
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_53JwYSDxaqeI@ep-dawn-bar-aecdxfuj-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
@@ -87,7 +87,7 @@ export function generateId(): string {
 export async function createUser(username: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> {
   try {
     const db = await initDb();
-    const existingUsers = await db`SELECT COUNT(*) as count FROM users`;
+    const existingUsers = await db`SELECT COUNT(*) as count FROM users` as { count: number }[];
     if (existingUsers[0]?.count > 0) {
       return { success: false, error: 'Un administrateur existe deja. Inscription reservee.' };
     }
