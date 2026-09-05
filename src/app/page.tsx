@@ -119,9 +119,7 @@ export default function PublicPage() {
                   <div className="h-44 bg-gray-100 flex items-center justify-center">
                     {v.photos && v.photos.length > 0 ? (
                       <img src={v.photos[0]} alt={v.nom} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-5xl">🚗</span>
-                    )}
+                    ) : null}
                   </div>
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-2">
