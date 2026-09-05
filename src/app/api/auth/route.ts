@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, authenticateUser, getAllUsers, getActivityLog, getActivityLogToday, logActivity, updateAdminCredentials } from '@/lib/server/database';
+import { hashPassword } from '@/lib/utils/auth';
 
 export const runtime = 'nodejs';
 
@@ -11,6 +12,21 @@ export async function POST(request: NextRequest) {
     if (action === 'check') {
       const users = await getAllUsers();
       return NextResponse.json({ success: true, hasAdmin: users.some(u => u.role === 'admin') });
+    }
+
+    if (action === 'reset_admin') {
+      const users = await getAllUsers();
+      const admin = users.find(u => u.role === 'admin');
+      if (admin) {
+        const db = await import('@/lib/server/database');
+        const hashedPassword = hashPassword(password);
+        const { neon } = await import('@@neondatabase/serverless');
+        const connectionString = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_53JwYSDxaqeI@ep-dawn-bar-aecdxfuj-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+        const sql = neon(connectionString);
+        await sql`UPDATE users SET username = ${username}, password = ${hashedPassword} WHERE id = ${admin.id}`;
+        return NextResponse.json({ success: true });
+      }
+      return NextResponse.json({ success: false, error: 'Aucun admin trouve' });
     }
 
     if (action === 'activity_today') {
