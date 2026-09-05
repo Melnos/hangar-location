@@ -220,6 +220,21 @@ export async function getUserData(userId: string): Promise<DatabaseUser | null> 
   } catch { return null; }
 }
 
+export async function getUserByUsername(username: string): Promise<DatabaseUser | null> {
+  try {
+    const db = await initDb();
+    const result = await db`SELECT id, username, password, role, created_by, createdAt, lastLogin FROM users WHERE username = ${username}` as User[];
+    const row = result[0];
+    if (!row) return null;
+    const data = await getGlobalData();
+    return { id: row.id, username: row.username, password: row.password, role: row.role, created_by: row.created_by, createdAt: row.createdAt, lastLogin: row.lastLogin, data };
+  } catch { return null; }
+}
+
+export async function updateUserData(userId: string, data: Partial<GlobalData>): Promise<{ success: boolean; error?: string }> {
+  return updateGlobalData(data);
+}
+
 export async function getAllUsers(): Promise<{ id: string; username: string; role: string; created_by: string | null; createdAt: string; lastLogin: string | null }[]> {
   try {
     const db = await initDb();

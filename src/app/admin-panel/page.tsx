@@ -149,8 +149,8 @@ export default function AdminPanelPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Ajouter un employe</h2>
             <form onSubmit={handleAddUser} className="flex gap-4 mb-6">
-              <Input placeholder="Nom d\'utilisateur" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} />
-              <Input placeholder="Mot de passe" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <Input label="Nom" placeholder="Nom d'utilisateur" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} />
+              <Input label="Mot de passe" type="password" placeholder="Mot de passe" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
               <Button type="submit" loading={loading}>Ajouter</Button>
             </form>
 
