@@ -4,14 +4,19 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useAuthStore } from '@/lib/stores/auth';
 
 const navigation = [
   { name: 'Tableau de bord', href: '/dashboard', icon: 'home' },
-  { name: 'Véhicules', href: '/vehicules', icon: 'car' },
+  { name: 'Vehicules', href: '/vehicules', icon: 'car' },
   { name: 'Locataires', href: '/locataires', icon: 'users' },
   { name: 'Contrats', href: '/contrats', icon: 'document' },
   { name: 'Rapports', href: '/rapports', icon: 'chart' },
-  { name: 'Paramètres', href: '/parametres', icon: 'settings' },
+  { name: 'Parametres', href: '/parametres', icon: 'settings' },
+];
+
+const adminNavigation = [
+  { name: 'Admin Panel', href: '/admin-panel', icon: 'shield' },
 ];
 
 function getIcon(icon: string) {
@@ -71,6 +76,17 @@ function getIcon(icon: string) {
           />
         </svg>
       );
+    case 'shield':
+      return (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+          />
+        </svg>
+      );
     case 'settings':
       return (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,6 +112,8 @@ function getIcon(icon: string) {
 export function Sidebar() {
   const pathname = usePathname();
   const { isOnline } = useNetworkStatus();
+  const { role } = useAuthStore();
+  const isAdmin = role === 'admin';
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-gray-900 text-white flex flex-col hidden md:flex">
@@ -127,6 +145,32 @@ export function Sidebar() {
               </li>
             );
           })}
+          {isAdmin && (
+            <>
+              <li className="pt-4 pb-2">
+                <span className="text-xs font-semibold text-gray-500 uppercase">Administration</span>
+              </li>
+              {adminNavigation.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={clsx(
+                        'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                        isActive
+                          ? 'bg-purple-600 text-white'
+                          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                      )}
+                    >
+                      {getIcon(item.icon)}
+                      {item.name}
+                    </Link>
+                  </li>
+                );
+              })}
+            </>
+          )}
         </ul>
       </nav>
       <div className="p-4 border-t border-gray-800 text-sm text-gray-400">
