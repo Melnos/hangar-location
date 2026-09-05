@@ -46,11 +46,27 @@ async function initDb(): Promise<ReturnType<typeof neon>> {
     )
   `;
 
+  // ==== MIGRATION ====
+  // Les tables ont pu être créées par une ancienne version SANS ces colonnes.
+  // On les ajoute si elles n'existent pas (IF NOT EXISTS est supporté par PostgreSQL).
+  try {
+    await db`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user'`;
+  } catch {}
+  try {
+    await db`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by TEXT`;
+  } catch {}
+  try {
+    await db`ALTER TABLE global_data ADD COLUMN IF NOT EXISTS updated_by TEXT`;
+  } catch {}
+
+  // Créer l'admin par défaut s'il n'existe pas encore
   const adminExists = await db`SELECT id FROM users WHERE role = 'admin'` as { id: string }[];
   if (adminExists.length === 0) {
-    const adminId = crypto.randomUUID();
+    const adminId = generateId();
     const hashedPassword = hashPassword(DEFAULT_ADMIN_PASSWORD);
-    await db`INSERT INTO users (id, username, password, role, created_by, createdAt, lastLogin) VALUES (${adminId}, ${DEFAULT_ADMIN_USERNAME}, ${hashedPassword}, 'admin', null, ${new Date().toISOString()}, null)`;
+    const now = new Date().toISOString();
+    await db`INSERT INTO users (id, username, password, role, created_by, createdAt, lastLogin) VALUES (${adminId}, ${DEFAULT_ADMIN_USERNAME}, ${hashedPassword}, 'admin', null, ${now}, null)`;
+    await db`INSERT INTO global_data (id, data, updated_at) VALUES ('global', ${JSON.stringify(DEFAULT_GLOBAL_DATA)}, ${now}) ON CONFLICT (id) DO NOTHING`;
   }
 
   return db;
