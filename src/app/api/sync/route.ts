@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const users = await getAllUsers();
     const exists = users.some((u) => u.username === username);
     if (!exists) {
-      await createUser(username, 'changeme123', 'user', null);
+      await createUser(username, 'changeme123', 'user');
     }
 
     // Merge par table (préserve les enregistrements des autres utilisateurs)
