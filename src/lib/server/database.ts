@@ -289,6 +289,25 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; er
   } catch { return { success: false, error: 'Erreur serveur' }; }
 }
 
+export async function resetAdminCredentials(username: string, password: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const db = await initDb();
+    const hashedPassword = hashPassword(password);
+    const adminExists = await db`SELECT id FROM users WHERE role = 'admin'` as { id: string }[];
+    const now = new Date().toISOString();
+    if (adminExists.length > 0) {
+      await db`UPDATE users SET username = ${username}, password = ${hashedPassword} WHERE id = ${adminExists[0].id}`;
+    } else {
+      const id = generateId();
+      await db`INSERT INTO users (id, username, password, role, created_by, createdAt, lastLogin) VALUES (${id}, ${username}, ${hashedPassword}, 'admin', null, ${now}, null)`;
+      await db`INSERT INTO global_data (id, data, updated_at) VALUES ('global', ${JSON.stringify(DEFAULT_GLOBAL_DATA)}, ${now}) ON CONFLICT (id) DO NOTHING`;
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: 'Erreur base de donnees' };
+  }
+}
+
 export async function updateAdminCredentials(adminId: string, newUsername: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
   try {
     const db = await initDb();
