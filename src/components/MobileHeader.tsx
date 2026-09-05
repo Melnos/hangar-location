@@ -6,11 +6,12 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Tableau de bord',
-  '/vehicules': 'Véhicules',
+  '/vehicules': 'Vehicules',
   '/contrats': 'Contrats',
   '/rapports': 'Rapports',
-  '/parametres': 'Paramètres',
+  '/parametres': 'Parametres',
   '/locataires': 'Locataires',
+  '/admin-panel': 'Admin Panel',
 };
 
 export function MobileHeader() {

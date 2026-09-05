@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
+import { useAuthStore } from '@/lib/stores/auth';
 
 const navigation = [
   { name: 'Accueil', href: '/dashboard', icon: 'home' },
-  { name: 'Véhicules', href: '/vehicules', icon: 'car' },
+  { name: 'Vehicules', href: '/vehicules', icon: 'car' },
   { name: 'Contrats', href: '/contrats', icon: 'document' },
   { name: 'Rapports', href: '/rapports', icon: 'chart' },
+  { name: 'Admin', href: '/admin-panel', icon: 'shield', adminOnly: true },
   { name: 'Plus', href: '/parametres', icon: 'menu' },
 ];
 
@@ -59,6 +61,17 @@ function getIcon(icon: string, isActive: boolean) {
           />
         </svg>
       );
+    case 'shield':
+      return (
+        <svg className="w-6 h-6" fill={isActive ? color : 'none'} stroke={color} viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={isActive ? 2.5 : 2}
+            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+          />
+        </svg>
+      );
     case 'menu':
       return (
         <svg className="w-6 h-6" fill="none" stroke={color} viewBox="0 0 24 24">
@@ -77,6 +90,10 @@ function getIcon(icon: string, isActive: boolean) {
 
 export function FloatingNav() {
   const pathname = usePathname();
+  const { role } = useAuthStore();
+  const isAdmin = role === 'admin';
+
+  const visibleNav = navigation.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <>
@@ -92,7 +109,7 @@ export function FloatingNav() {
             border: '1px solid rgba(255, 255, 255, 0.5)',
           }}
         >
-          {navigation.map((item) => {
+          {visibleNav.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
