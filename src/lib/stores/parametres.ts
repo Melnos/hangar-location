@@ -8,6 +8,7 @@ export interface AdminData {
   telephone: string;
   adresse: string;
   nomEntreprise: string;
+  logoUrl: string;
 }
 
 interface ParametresState {
@@ -32,6 +33,7 @@ const defaultAdminData: AdminData = {
   telephone: '',
   adresse: '',
   nomEntreprise: 'Hangar Location',
+  logoUrl: '/icon-192.png',
 };
 
 export const useParametresStore = create<ParametresState>()(

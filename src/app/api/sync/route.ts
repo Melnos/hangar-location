@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getGlobalData, updateGlobalData, createUser, getAllUsers } from '@/lib/server/database';
+import { getGlobalData, updateGlobalData, createUser, getAllUsers, getUserByUsername } from '@/lib/server/database';
 
 export const runtime = 'nodejs';
 
@@ -43,6 +43,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Donnees manquantes' }, { status: 400 });
     }
 
+    const currentUser = await getUserByUsername(username);
+    if (!currentUser) {
+      return NextResponse.json({ success: false, error: 'Utilisateur inconnu' }, { status: 401 });
+    }
+    if (data.parametres && currentUser.role !== 'admin') {
+      return NextResponse.json({ success: false, error: 'Seul l administrateur peut modifier les donnees administrateur' }, { status: 403 });
+    }
+
     // Si l'utilisateur n'existe pas encore, le créer comme employé
     const users = await getAllUsers();
     const exists = users.some((u) => u.username === username);
@@ -51,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Merge par table (préserve les enregistrements des autres utilisateurs)
-    const merged = await updateGlobalData(data);
+    const merged = await updateGlobalData(data, currentUser.username);
     return NextResponse.json(merged, { status: merged.success ? 200 : 400 });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Erreur serveur' }, { status: 500 });

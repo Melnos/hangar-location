@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useAuthStore } from '@/lib/stores/auth';
+import { useParametresStore } from '@/lib/stores/parametres';
 
 const navigation = [
   { name: 'Tableau de bord', href: '/dashboard', icon: 'home' },
@@ -113,14 +114,15 @@ export function Sidebar() {
   const pathname = usePathname();
   const { isOnline } = useNetworkStatus();
   const { role } = useAuthStore();
+  const { adminData } = useParametresStore();
   const isAdmin = role === 'admin';
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-gray-900 text-white flex flex-col hidden md:flex">
       <div className="p-4 border-b border-gray-800 flex items-center gap-3">
-        <img src="/icon-192.png" alt="Hangar Location" className="w-10 h-10 rounded-lg" />
+        <img src={adminData.logoUrl || '/icon-192.png'} alt={adminData.nomEntreprise} className="w-10 h-10 rounded-lg object-cover" />
         <div>
-          <h1 className="text-xl font-bold">Hangar Location</h1>
+          <h1 className="text-xl font-bold truncate max-w-[170px]">{adminData.nomEntreprise}</h1>
           <p className="text-sm text-gray-400">Gestion de flotte</p>
         </div>
       </div>

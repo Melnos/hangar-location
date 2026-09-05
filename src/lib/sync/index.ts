@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { now } from '../utils';
 import { useAuthStore } from '../stores/auth';
+import { useParametresStore } from '../stores/parametres';
 
 export interface SyncChange {
   id: string;
@@ -163,6 +164,9 @@ export const syncService = {
     if (data.documents_vehicule) await db.documents_vehicule.bulkPut(data.documents_vehicule);
     if (data.maintenances) await db.maintenances.bulkPut(data.maintenances);
     if (data.notifications) await db.notifications.bulkPut(data.notifications);
+    if (data.parametres?.adminData) {
+      useParametresStore.getState().setAdminData(data.parametres.adminData);
+    }
 
     // Supprime localement les enregistrements supprimes par un autre appareil
     const deleted: DeletedMap = data.deleted || {};
@@ -176,14 +180,16 @@ export const syncService = {
   },
 
   // Export all local data for sync
-  async exportLocalData(): Promise<Record<string, unknown[]>> {
-    const data: Record<string, unknown[]> = {};
+  async exportLocalData(): Promise<Record<string, unknown>> {
+    const data: Record<string, unknown> = {};
     data.vehicules = await db.vehicules.toArray();
     data.locataires = await db.locataires.toArray();
     data.contrats = await db.contrats.toArray();
     data.documents_vehicule = await db.documents_vehicule.toArray();
     data.maintenances = await db.maintenances.toArray();
     data.notifications = await db.notifications.toArray();
+    const { adminId, adminData } = useParametresStore.getState();
+    data.parametres = { adminId, adminData };
     return data;
   },
 

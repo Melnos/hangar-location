@@ -27,6 +27,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       vehicules: publicVehicules,
+      entreprise: globalData.parametres?.adminData || null,
       lastUpdated: new Date().toISOString(),
     });
   } catch (error) {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuthStore } from '@/lib/stores/auth';
+import { useParametresStore } from '@/lib/stores/parametres';
 import { usePathname } from 'next/navigation';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
@@ -16,6 +17,7 @@ const pageTitles: Record<string, string> = {
 
 export function MobileHeader() {
   const { username } = useAuthStore();
+  const { adminData } = useParametresStore();
   const pathname = usePathname();
   const { isOnline } = useNetworkStatus();
 
@@ -25,14 +27,14 @@ export function MobileHeader() {
         return title;
       }
     }
-    return 'Hangar Location';
+    return adminData.nomEntreprise;
   };
 
   return (
     <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#f5f5dc]/90 backdrop-blur-md border-b border-gray-200">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
-          <img src="/icon-192.png" alt="Hangar Location" className="w-8 h-8 rounded-lg" />
+          <img src={adminData.logoUrl || '/icon-192.png'} alt={adminData.nomEntreprise} className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-bold text-gray-900">{getTitle()}</span>
         </div>
         <div className="flex items-center gap-2">

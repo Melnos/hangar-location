@@ -13,8 +13,17 @@ interface PublicVehicule {
   photos?: string[];
 }
 
+interface Entreprise {
+  nomEntreprise?: string;
+  telephone?: string;
+  email?: string;
+  adresse?: string;
+  logoUrl?: string;
+}
+
 export default function PublicPage() {
   const [vehicules, setVehicules] = useState<PublicVehicule[]>([]);
+  const [entreprise, setEntreprise] = useState<Entreprise | null>(null);
   const [loading, setLoading] = useState(true);
   const { isAuthenticated, role } = useAuthStore();
 
@@ -25,6 +34,7 @@ export default function PublicPage() {
         const result = await res.json();
         if (result.success && result.vehicules) {
           setVehicules(result.vehicules);
+          setEntreprise(result.entreprise || null);
         }
       } catch {}
       setLoading(false);
@@ -60,9 +70,9 @@ export default function PublicPage() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/icon-192.png" alt="Hangar Location" className="w-11 h-11 rounded-xl" />
+            <img src={entreprise?.logoUrl || '/icon-192.png'} alt={entreprise?.nomEntreprise || 'Entreprise'} className="w-11 h-11 rounded-xl object-cover" />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Hangar Location</h1>
+              <h1 className="text-xl font-bold text-gray-900">{entreprise?.nomEntreprise || 'Hangar Location'}</h1>
               <p className="text-xs text-gray-500">Notre flotte de vehicules</p>
             </div>
           </div>
@@ -144,7 +154,10 @@ export default function PublicPage() {
         )}
 
         <footer className="mt-12 text-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Hangar Location - Tous droits reserves</p>
+          {entreprise?.telephone && <p className="mb-1">Contact : {entreprise.telephone}</p>}
+          {entreprise?.email && <p className="mb-1">{entreprise.email}</p>}
+          {entreprise?.adresse && <p className="mb-1">{entreprise.adresse}</p>}
+          <p>© {new Date().getFullYear()} {entreprise?.nomEntreprise || 'Hangar Location'} - Tous droits reserves</p>
         </footer>
       </main>
     </div>

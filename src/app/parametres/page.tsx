@@ -6,6 +6,7 @@ import { useNotifications } from '@/hooks/useDatabase';
 import { notificationRepository } from '@/repositories';
 import { useParametresStore, type AdminData } from '@/lib/stores/parametres';
 import { useAuthStore } from '@/lib/stores/auth';
+import { redirect } from 'next/navigation';
 import { syncService, startAutoSync, stopAutoSync } from '@/lib/sync';
 import { notificationService } from '@/lib/notifications';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -36,7 +37,7 @@ export default function ParametresPage() {
     setAdminData,
   } = useParametresStore();
 
-  const { username, lastSync, logout } = useAuthStore();
+  const { username, role, lastSync, logout } = useAuthStore();
   const { isOnline } = useNetworkStatus();
 
   const [localAdminData, setLocalAdminData] = useState<AdminData>(adminData);
@@ -124,7 +125,8 @@ export default function ParametresPage() {
   const handleSaveAdminData = () => {
     setIsSavingAdmin(true);
     setAdminData(localAdminData);
-    setTimeout(() => {
+    setTimeout(async () => {
+      await syncService.syncWithServer();
       setIsSavingAdmin(false);
       setAdminSaved(true);
       setTimeout(() => setAdminSaved(false), 3000);
@@ -134,6 +136,10 @@ export default function ParametresPage() {
   const handleLogout = () => {
     logout();
   };
+
+  if (role !== 'admin') {
+    redirect('/dashboard');
+  }
 
   return (
     <div>
@@ -203,6 +209,14 @@ export default function ParametresPage() {
               value={localAdminData.nomEntreprise}
               onChange={(e) => handleAdminDataChange('nomEntreprise', e.target.value)}
               placeholder="Nom de votre entreprise"
+            />
+            <Input
+              label="URL du logo"
+              type="url"
+              value={localAdminData.logoUrl}
+              onChange={(e) => handleAdminDataChange('logoUrl', e.target.value)}
+              placeholder="https://exemple.com/logo.png"
+              helperText="Le logo sera utilisé sur la page publique et dans l'application."
             />
             <div className="flex items-center gap-3">
               <Button onClick={handleSaveAdminData} loading={isSavingAdmin}>
