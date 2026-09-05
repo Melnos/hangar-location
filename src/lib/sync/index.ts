@@ -32,11 +32,12 @@ export const syncService = {
     localStorage.setItem(SYNC_STATE_KEY, JSON.stringify(state));
   },
 
+  // Pull global data from server (admin only)
   async pullFromServer(): Promise<SyncResult> {
     const { userId, token } = useAuthStore.getState();
 
     if (!userId || !token) {
-      return { success: false, error: 'Non authentifié' } as any;
+      return { success: false, message: 'Non authentifie' };
     }
 
     try {
@@ -50,7 +51,7 @@ export const syncService = {
 
       if (!response.ok) {
         if (response.status === 404) {
-          return { success: false, message: 'Synchronisation serveur non disponible' };
+          return { success: false, message: 'Serveur non disponible' };
         }
         throw new Error(`Erreur serveur: ${response.status}`);
       }
@@ -59,7 +60,7 @@ export const syncService = {
 
       if (result.success && result.data) {
         await this.applyServerData(result.data);
-        return { success: true, message: 'Données synchronisées depuis le serveur' };
+        return { success: true, message: 'Donnees synchronisees depuis le serveur' };
       }
 
       return { success: false, message: result.error || 'Erreur de synchronisation' };
@@ -71,11 +72,12 @@ export const syncService = {
     }
   },
 
+  // Push local data to server (overwrites global data)
   async pushToServer(): Promise<SyncResult> {
     const { userId, token } = useAuthStore.getState();
 
     if (!userId || !token) {
-      return { success: false, error: 'Non authentifié' } as any;
+      return { success: false, message: 'Non authentifie' };
     }
 
     try {
@@ -93,7 +95,7 @@ export const syncService = {
 
       if (!response.ok) {
         if (response.status === 404) {
-          return { success: false, message: 'Synchronisation serveur non disponible' };
+          return { success: false, message: 'Serveur non disponible' };
         }
         throw new Error(`Erreur serveur: ${response.status}`);
       }
@@ -101,7 +103,7 @@ export const syncService = {
       const result = await response.json();
 
       if (result.success) {
-        return { success: true, message: 'Données envoyées au serveur' };
+        return { success: true, message: 'Donnees envoyees au serveur' };
       }
 
       return { success: false, message: result.error || 'Erreur de synchronisation' };
@@ -113,6 +115,7 @@ export const syncService = {
     }
   },
 
+  // Full sync: pull then push
   async syncWithServer(): Promise<SyncResult> {
     const pullResult = await this.pullFromServer();
     if (!pullResult.success) {
@@ -126,11 +129,11 @@ export const syncService = {
 
     const syncDate = now();
     await this.saveSyncState({ lastSync: syncDate });
-    useAuthStore.getState().setUsername(useAuthStore.getState().username);
 
-    return { success: true, message: 'Synchronisation complète réussie' };
+    return { success: true, message: 'Synchronisation complete reussie' };
   },
 
+  // Apply server data to local database
   async applyServerData(data: any): Promise<void> {
     if (data.vehicules) await db.vehicules.bulkPut(data.vehicules);
     if (data.locataires) await db.locataires.bulkPut(data.locataires);
@@ -140,6 +143,7 @@ export const syncService = {
     if (data.notifications) await db.notifications.bulkPut(data.notifications);
   },
 
+  // Export all local data for sync
   async exportLocalData(): Promise<Record<string, unknown[]>> {
     const data: Record<string, unknown[]> = {};
     data.vehicules = await db.vehicules.toArray();
@@ -151,6 +155,7 @@ export const syncService = {
     return data;
   },
 
+  // Import data from external source
   async importData(data: Record<string, unknown[]>): Promise<void> {
     if (data.vehicules) await db.vehicules.bulkPut(data.vehicules as any);
     if (data.locataires) await db.locataires.bulkPut(data.locataires as any);

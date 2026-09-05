@@ -1,14 +1,25 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth';
 import { Sidebar, FloatingNav, MobileHeader } from '@/components';
-import LoginScreen from '@/components/LoginScreen';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const { isAuthenticated } = useAuthStore();
 
+  // Public pages (no auth required)
+  if (pathname === '/' || pathname === '/admin') {
+    return <>{children}</>;
+  }
+
+  // Admin-only pages (auth required)
   if (!isAuthenticated) {
-    return <LoginScreen />;
+    // Redirect to admin login if not authenticated
+    if (typeof window !== 'undefined') {
+      window.location.href = '/admin';
+    }
+    return null;
   }
 
   return (

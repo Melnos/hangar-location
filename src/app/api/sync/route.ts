@@ -1,25 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserData, updateUserData } from '@/lib/server/database';
+import { getUserData, getUserByUsername, updateGlobalData, getGlobalData } from '@/lib/server/database';
 
 export const runtime = 'nodejs';
 
+function decodeTokenUserId(request: NextRequest): string | null {
+  const authHeader = request.headers.get('authorization') || '';
+  if (authHeader.startsWith('Basic ')) {
+    const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf-8');
+    const username = decoded.split(':')[0];
+    return username;
+  }
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   try {
+    const tokenUserId = decodeTokenUserId(request);
     const userId = request.headers.get('x-user-id');
+    const identifier = tokenUserId || userId;
 
-    if (!userId) {
-      return NextResponse.json({ success: false, error: 'Non authentifié' }, { status: 401 });
+    if (!identifier) {
+      return NextResponse.json({ success: false, error: 'Non authentifie' }, { status: 401 });
     }
 
-    const userData = await getUserData(userId);
+    // Verify admin exists
+    let userData = await getUserData(identifier);
+    if (!userData) {
+      userData = await getUserByUsername(identifier);
+    }
 
     if (!userData) {
-      return NextResponse.json({ success: false, error: 'Utilisateur non trouvé' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Utilisateur non trouve' }, { status: 404 });
     }
+
+    // Return global data
+    const data = await getGlobalData();
 
     return NextResponse.json({
       success: true,
-      data: userData.data,
+      data,
       lastLogin: userData.lastLogin,
     });
   } catch (error) {
@@ -29,19 +48,32 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const tokenUserId = decodeTokenUserId(request);
     const userId = request.headers.get('x-user-id');
+    const identifier = tokenUserId || userId;
 
-    if (!userId) {
-      return NextResponse.json({ success: false, error: 'Non authentifié' }, { status: 401 });
+    if (!identifier) {
+      return NextResponse.json({ success: false, error: 'Non authentifie' }, { status: 401 });
     }
 
     const { data } = await request.json();
 
     if (!data) {
-      return NextResponse.json({ success: false, error: 'Données manquantes' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Donnees manquantes' }, { status: 400 });
     }
 
-    const result = await updateUserData(userId, data);
+    // Verify admin exists
+    let userData = await getUserData(identifier);
+    if (!userData) {
+      userData = await getUserByUsername(identifier);
+    }
+
+    if (!userData) {
+      return NextResponse.json({ success: false, error: 'Utilisateur non trouve' }, { status: 404 });
+    }
+
+    // Update global data (overwrites previous data)
+    const result = await updateGlobalData(data);
 
     return NextResponse.json(result, { status: result.success ? 200 : 400 });
   } catch (error) {

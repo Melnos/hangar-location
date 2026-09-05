@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createUser, authenticateUser } from '@/lib/server/database';
+import { createUser, authenticateUser, getAllUsers } from '@/lib/server/database';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
     const { action, username, password } = await request.json();
+
+    // Check if admin exists (no credentials required)
+    if (action === 'check') {
+      const users = await getAllUsers();
+      return NextResponse.json({ success: true, hasAdmin: users.length > 0 });
+    }
 
     if (!username || !password) {
       return NextResponse.json({ success: false, error: 'Nom d\'utilisateur et mot de passe requis' }, { status: 400 });
