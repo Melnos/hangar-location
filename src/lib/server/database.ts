@@ -46,7 +46,7 @@ async function initDb(): Promise<ReturnType<typeof neon>> {
     )
   `;
 
-  const adminExists = await db`SELECT id FROM users WHERE role = 'admin'`;
+  const adminExists = await db`SELECT id FROM users WHERE role = 'admin'` as { id: string }[];
   if (adminExists.length === 0) {
     const adminId = crypto.randomUUID();
     const hashedPassword = hashPassword(DEFAULT_ADMIN_PASSWORD);
