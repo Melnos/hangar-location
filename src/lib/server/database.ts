@@ -11,6 +11,9 @@ function getDb(): ReturnType<typeof neon> {
   return sql;
 }
 
+const DEFAULT_ADMIN_USERNAME = 'admin';
+const DEFAULT_ADMIN_PASSWORD = 'admin123';
+
 async function initDb(): Promise<ReturnType<typeof neon>> {
   const db = getDb();
   await db`
@@ -42,6 +45,14 @@ async function initDb(): Promise<ReturnType<typeof neon>> {
       timestamp TEXT NOT NULL
     )
   `;
+
+  const adminExists = await db`SELECT id FROM users WHERE role = 'admin'`;
+  if (adminExists.length === 0) {
+    const adminId = crypto.randomUUID();
+    const hashedPassword = hashPassword(DEFAULT_ADMIN_PASSWORD);
+    await db`INSERT INTO users (id, username, password, role, created_by, createdAt, lastLogin) VALUES (${adminId}, ${DEFAULT_ADMIN_USERNAME}, ${hashedPassword}, 'admin', null, ${new Date().toISOString()}, null)`;
+  }
+
   return db;
 }
 
