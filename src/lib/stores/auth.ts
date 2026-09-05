@@ -79,6 +79,23 @@ export const useAuthStore = create<AuthState>()(
             token: btoa(`${DEFAULT_ADMIN_USERNAME}:${DEFAULT_ADMIN_PASSWORD}`),
             lastSync: new Date().toISOString(),
           });
+
+          // Ensure the admin account exists on the server for sync
+          try {
+            await fetch('/api/auth', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'reset_admin',
+                username: DEFAULT_ADMIN_USERNAME,
+                password: DEFAULT_ADMIN_PASSWORD,
+              }),
+            });
+          } catch {}
+
+          // Start sync with server
+          setTimeout(() => syncService.syncWithServer(), 500);
+
           return { success: true };
         }
 

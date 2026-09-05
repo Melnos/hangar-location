@@ -50,10 +50,7 @@ export const syncService = {
       });
 
       if (!response.ok) {
-        if (response.status === 404) {
-          return { success: false, message: 'Serveur non disponible' };
-        }
-        throw new Error(`Erreur serveur: ${response.status}`);
+        return { success: false, message: `Synchronisation indisponible (${response.status}) - vos donnees restent locales` };
       }
 
       const result = await response.json();
@@ -67,7 +64,7 @@ export const syncService = {
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Erreur inconnue',
+        message: 'Hors ligne - vos donnees restent locales',
       };
     }
   },
@@ -94,10 +91,7 @@ export const syncService = {
       });
 
       if (!response.ok) {
-        if (response.status === 404) {
-          return { success: false, message: 'Serveur non disponible' };
-        }
-        throw new Error(`Erreur serveur: ${response.status}`);
+        return { success: false, message: `Envoi indisponible (${response.status}) - donnees conservees en local` };
       }
 
       const result = await response.json();
@@ -110,19 +104,16 @@ export const syncService = {
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Erreur inconnue',
+        message: 'Hors ligne - donnees conservees en local',
       };
     }
   },
 
-  // Full sync: pull then push
+  // Full sync: try pull, then always push local data so it's not blocked
   async syncWithServer(): Promise<SyncResult> {
-    const pullResult = await this.pullFromServer();
-    if (!pullResult.success) {
-      return pullResult;
-    }
-
+    await this.pullFromServer();
     const pushResult = await this.pushToServer();
+
     if (!pushResult.success) {
       return pushResult;
     }
