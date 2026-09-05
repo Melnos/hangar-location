@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import type { Vehicule } from '@/models';
@@ -11,10 +11,8 @@ function PublicVehiculesPage() {
   useEffect(() => {
     const loadVehicules = async () => {
       try {
-        // Fetch from public API (no auth required)
         const response = await fetch('/api/public');
         const result = await response.json();
-
         if (result.success && result.vehicules) {
           setVehicules(result.vehicules);
           setLastUpdated(result.lastUpdated);
@@ -25,9 +23,7 @@ function PublicVehiculesPage() {
         setLoading(false);
       }
     };
-
     loadVehicules();
-    // Refresh every 30 seconds to get updates from admin
     const interval = setInterval(loadVehicules, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -80,9 +76,7 @@ function PublicVehiculesPage() {
                 <p className="text-sm text-gray-500">Notre flotte de vehicules</p>
               </div>
             </div>
-            <a href="/admin" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-              Acces Admin
-            </a>
+            <a href="/admin" className="text-sm text-blue-600 hover:text-blue-800 font-medium">Acces Admin</a>
           </div>
         </div>
       </header>
@@ -103,11 +97,9 @@ function PublicVehiculesPage() {
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <p className="text-sm text-gray-500">Tarif journalier min</p>
-            <p className="text-2xl font-bold text-gray-900">
-              {vehicules.length > 0 ? `${Math.min(...vehicules.map(v => v.tarif_journalier))}€` : '-'}
-            </p>
+            <p className="text-2xl font-bold text-gray-900">{vehicules.length > 0 ? `${Math.min(...vehicules.map(v => v.tarif_journalier))}€` : '-'}</p>
           </div>
-</main>
+        </div>
 
         {vehicules.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-12 text-center">
@@ -130,7 +122,6 @@ function PublicVehiculesPage() {
                     </svg>
                   )}
                 </div>
-
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">{vehicule.nom}</h3>
@@ -138,28 +129,19 @@ function PublicVehiculesPage() {
                       {getStatusLabel(vehicule.statut)}
                     </span>
                   </div>
-
                   <div className="space-y-1 text-sm text-gray-600">
                     <p><span className="font-medium">Plaque:</span> {vehicule.plaque}</p>
                     <p><span className="font-medium">Couleur:</span> {vehicule.couleur}</p>
                   </div>
-
                   <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
                     <div>
                       <span className="text-2xl font-bold text-blue-600">{vehicule.tarif_journalier}€</span>
                       <span className="text-sm text-gray-500">/jour</span>
                     </div>
-                    {vehicule.statut === 'disponible' && (
-                      <span className="text-green-600 text-sm font-medium">Disponible</span>
-                    )}
-                    {vehicule.statut === 'en_location' && (
-                      <span className="text-blue-600 text-sm font-medium">Loue</span>
-                    )}
+                    {vehicule.statut === 'disponible' && <span className="text-green-600 text-sm font-medium">Disponible</span>}
+                    {vehicule.statut === 'en_location' && <span className="text-blue-600 text-sm font-medium">Loue</span>}
                   </div>
-
-                  <p className="mt-3 text-xs text-gray-400 text-center">
-                    Contactez-nous pour reserver ce vehicule
-                  </p>
+                  <p className="mt-3 text-xs text-gray-400 text-center">Contactez-nous pour reserver ce vehicule</p>
                 </div>
               </div>
             ))}
