@@ -11,10 +11,9 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
-  const { isAuthenticated, login } = useAuthStore();
+  const { isAuthenticated, role, login } = useAuthStore();
 
   useEffect(() => {
-    // Check if admin exists, if not redirect to setup
     const checkAdmin = async () => {
       try {
         const response = await fetch('/api/auth', {
@@ -26,11 +25,8 @@ export default function AdminPage() {
         if (!result.hasAdmin) {
           redirect('/setup');
         }
-      } catch {
-        // If API fails, continue
-      } finally {
-        setChecking(false);
-      }
+      } catch {}
+      setChecking(false);
     };
     checkAdmin();
   }, []);
@@ -56,19 +52,15 @@ export default function AdminPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     if (!username.trim() || !password.trim()) {
       setError('Veuillez remplir tous les champs');
       setLoading(false);
       return;
     }
-
     const result = await login(username.trim(), password);
-
     if (!result.success) {
       setError(result.error || 'Erreur de connexion');
     }
-
     setLoading(false);
   };
 
@@ -77,36 +69,17 @@ export default function AdminPage() {
       <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8 w-full max-w-md">
         <div className="text-center mb-6">
           <img src="/icon-192.png" alt="Hangar Location" className="w-16 h-16 mx-auto mb-4 rounded-xl" />
-          <h1 className="text-2xl font-bold text-gray-900">Administration</h1>
-          <p className="text-gray-500 mt-2">
-            Acces reserve a l&apos;administrateur
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">Hangar Location</h1>
+          <p className="text-gray-500 mt-2">Connexion</p>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Nom d&apos;utilisateur"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Entrez votre nom d&apos;utilisateur"
-          />
-          <Input
-            label="Mot de passe"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Entrez votre mot de passe"
-          />
+          <Input label="Nom d&apos;utilisateur" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Entrez votre nom" />
+          <Input label="Mot de passe" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Entrez votre mot de passe" />
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" className="w-full" loading={loading}>
-            Se connecter
-          </Button>
+          <Button type="submit" className="w-full" loading={loading}>Se connecter</Button>
         </form>
-
         <div className="mt-4 text-center">
-          <a href="/" className="text-sm text-gray-500 hover:text-gray-700">
-            Retour au site public
-          </a>
+          <a href="/" className="text-sm text-gray-500 hover:text-gray-700">Retour au site public</a>
         </div>
       </div>
     </div>

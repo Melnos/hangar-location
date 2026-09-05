@@ -1,16 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createUser, authenticateUser, getAllUsers } from '@/lib/server/database';
+import { createUser, authenticateUser, getAllUsers, getActivityLog, getActivityLogToday, logActivity, updateAdminCredentials } from '@/lib/server/database';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    const { action, username, password } = await request.json();
+    const body = await request.json();
+    const { action, username, password, role, createdBy, adminId } = body;
 
-    // Check if admin exists (no credentials required)
     if (action === 'check') {
       const users = await getAllUsers();
-      return NextResponse.json({ success: true, hasAdmin: users.length > 0 });
+      return NextResponse.json({ success: true, hasAdmin: users.some(u => u.role === 'admin') });
+    }
+
+    if (action === 'activity_today') {
+      const logs = await getActivityLogToday();
+      return NextResponse.json({ success: true, logs });
+    }
+
+    if (action === 'activity_all') {
+      const logs = await getActivityLog();
+      return NextResponse.json({ success: true, logs });
+    }
+
+    if (action === 'log_activity') {
+      const { userId, username: logUsername, action: logAction, details } = body;
+      await logActivity(userId, logUsername, logAction, details);
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'update_admin') {
+      const result = await updateAdminCredentials(adminId, username, password);
+      return NextResponse.json(result, { status: result.success ? 200 : 400 });
+    }
+
+    if (action === 'get_users') {
+      const users = await getAllUsers();
+      return NextResponse.json({ success: true, users });
     }
 
     if (!username || !password) {
@@ -18,12 +44,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'register') {
-      const result = await createUser(username, password);
+      const userRole = role || 'user';
+      const result = await createUser(username, password, userRole, createdBy);
+      if (result.success && createdBy) {
+        await logActivity(createdBy, 'admin', 'register_user', `Nouvel utilisateur: ${username}`);
+      }
       return NextResponse.json(result, { status: result.success ? 201 : 400 });
     }
 
     if (action === 'login') {
       const result = await authenticateUser(username, password);
+      if (result.success) {
+        await logActivity(result.user!.id, result.user!.username, 'login', 'Connexion');
+      }
       return NextResponse.json(result, { status: result.success ? 200 : 401 });
     }
 

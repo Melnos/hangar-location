@@ -6,16 +6,13 @@ import { Sidebar, FloatingNav, MobileHeader } from '@/components';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, role } = useAuthStore();
 
-  // Public pages (no auth required)
-  if (pathname === '/' || pathname === '/admin') {
+  if (pathname === '/' || pathname === '/admin' || pathname === '/setup') {
     return <>{children}</>;
   }
 
-  // Admin-only pages (auth required)
   if (!isAuthenticated) {
-    // Redirect to admin login if not authenticated
     if (typeof window !== 'undefined') {
       window.location.href = '/admin';
     }

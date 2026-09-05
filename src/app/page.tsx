@@ -1,32 +1,39 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { db } from '@/lib/db';
+import { useAuthStore } from '@/lib/stores/auth';
 import type { Vehicule } from '@/models';
 
 function PublicVehiculesPage() {
   const [vehicules, setVehicules] = useState<Vehicule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const { isAuthenticated, role, username } = useAuthStore();
 
   useEffect(() => {
-    const loadVehicules = async () => {
-      try {
-        const response = await fetch('/api/public');
-        const result = await response.json();
-        if (result.success && result.vehicules) {
-          setVehicules(result.vehicules);
-          setLastUpdated(result.lastUpdated);
-        }
-      } catch (error) {
-        console.error('Erreur chargement vehicules:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadVehicules();
     const interval = setInterval(loadVehicules, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const loadVehicules = async () => {
+    try {
+      if (isAuthenticated) {
+        const data = await db.vehicules.toArray();
+        setVehicules(data);
+      } else {
+        const response = await fetch('/api/public');
+        const result = await response.json();
+        if (result.success && result.vehicules) {
+          setVehicules(result.vehicules);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur chargement vehicules:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (statut: string) => {
     switch (statut) {
@@ -73,15 +80,42 @@ function PublicVehiculesPage() {
               <img src="/icon-192.png" alt="Hangar Location" className="w-12 h-12 rounded-xl" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Hangar Location</h1>
-                <p className="text-sm text-gray-500">Notre flotte de vehicules</p>
+                <p className="text-sm text-gray-500">
+                  {isAuthenticated ? `Bienvenue, ${username}` : 'Notre flotte de vehicules'}
+                </p>
               </div>
             </div>
-            <a href="/admin" className="text-sm text-blue-600 hover:text-blue-800 font-medium">Acces Admin</a>
+            <div className="flex items-center gap-4">
+              {isAuthenticated ? (
+                <>
+                  <span className="text-sm text-gray-600">{role === 'admin' ? 'Directeur' : 'Employe'}</span>
+                  <a href="/dashboard" className="text-sm text-blue-600 hover:text-blue-800 font-medium">Dashboard</a>
+                  {role === 'admin' && (
+                    <a href="/admin-panel" className="text-sm text-purple-600 hover:text-purple-800 font-medium">Admin</a>
+                  )}
+                </>
+              ) : (
+                <a href="/admin" className="text-sm text-blue-600 hover:text-blue-800 font-medium">Connexion</a>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
+        {isAuthenticated && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <p className="text-blue-800">
+                <strong>Connecte en tant que {username}</strong> - Vous pouvez ajouter et modifier les vehicules, contrats, etc.
+              </p>
+              <a href="/vehicules/nouveau" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                + Nouveau vehicule
+              </a>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow p-4">
             <p className="text-sm text-gray-500">Total vehicules</p>
@@ -97,7 +131,9 @@ function PublicVehiculesPage() {
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <p className="text-sm text-gray-500">Tarif journalier min</p>
-            <p className="text-2xl font-bold text-gray-900">{vehicules.length > 0 ? `${Math.min(...vehicules.map(v => v.tarif_journalier))}€` : '-'}</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {vehicules.length > 0 ? `${Math.min(...vehicules.map(v => v.tarif_journalier))}€` : '-'}
+            </p>
           </div>
         </div>
 
@@ -141,7 +177,11 @@ function PublicVehiculesPage() {
                     {vehicule.statut === 'disponible' && <span className="text-green-600 text-sm font-medium">Disponible</span>}
                     {vehicule.statut === 'en_location' && <span className="text-blue-600 text-sm font-medium">Loue</span>}
                   </div>
-                  <p className="mt-3 text-xs text-gray-400 text-center">Contactez-nous pour reserver ce vehicule</p>
+                  {isAuthenticated && (
+                    <div className="mt-3 text-xs text-gray-400 text-center">
+                      <a href={`/vehicules/${vehicule.id}`} className="text-blue-600 hover:underline">Voir details</a>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

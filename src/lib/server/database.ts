@@ -18,6 +18,8 @@ async function initDb(): Promise<ReturnType<typeof neon>> {
       id TEXT PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'user',
+      created_by TEXT,
       createdAt TEXT NOT NULL,
       lastLogin TEXT
     )
@@ -26,7 +28,18 @@ async function initDb(): Promise<ReturnType<typeof neon>> {
     CREATE TABLE IF NOT EXISTS global_data (
       id TEXT PRIMARY KEY DEFAULT 'global',
       data JSONB NOT NULL DEFAULT '{}',
-      updated_at TEXT NOT NULL DEFAULT NOW()
+      updated_at TEXT NOT NULL DEFAULT NOW(),
+      updated_by TEXT
+    )
+  `;
+  await db`
+    CREATE TABLE IF NOT EXISTS activity_log (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      username TEXT NOT NULL,
+      action TEXT NOT NULL,
+      details TEXT,
+      timestamp TEXT NOT NULL
     )
   `;
   return db;
@@ -36,6 +49,8 @@ export interface User {
   id: string;
   username: string;
   password: string;
+  role: 'admin' | 'user';
+  created_by: string | null;
   createdAt: string;
   lastLogin: string | null;
 }
@@ -50,10 +65,21 @@ export interface GlobalData {
   parametres: any;
 }
 
+export interface ActivityLog {
+  id: string;
+  user_id: string;
+  username: string;
+  action: string;
+  details: string | null;
+  timestamp: string;
+}
+
 export interface DatabaseUser {
   id: string;
   username: string;
   password: string;
+  role: 'admin' | 'user';
+  created_by: string | null;
   createdAt: string;
   lastLogin: string | null;
   data: GlobalData;
@@ -69,7 +95,7 @@ const DEFAULT_GLOBAL_DATA: GlobalData = {
   parametres: {
     adminId: 'ADMIN-001',
     adminData: {
-      nom: 'Admin',
+      nom: 'Directeur',
       prenom: 'Principal',
       email: '',
       telephone: '',
@@ -84,18 +110,46 @@ export function generateId(): string {
   return crypto.randomUUID();
 }
 
-export async function createUser(username: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> {
+export async function logActivity(userId: string, username: string, action: string, details?: string): Promise<void> {
   try {
     const db = await initDb();
-    const existingUsers = await db`SELECT COUNT(*) as count FROM users` as { count: number }[];
-    if (existingUsers[0]?.count > 0) {
-      return { success: false, error: 'Un administrateur existe deja. Inscription reservee.' };
-    }
+    const id = generateId();
+    const now = new Date().toISOString();
+    await db`INSERT INTO activity_log (id, user_id, username, action, details, timestamp) VALUES (${id}, ${userId}, ${username}, ${action}, ${details || null}, ${now})`;
+  } catch (error) {
+    console.error('Error logging activity:', error);
+  }
+}
+
+export async function getActivityLog(limit: number = 100): Promise<ActivityLog[]> {
+  try {
+    const db = await initDb();
+    const rows = await db`SELECT * FROM activity_log ORDER BY timestamp DESC LIMIT ${limit}` as ActivityLog[];
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
+export async function getActivityLogToday(): Promise<ActivityLog[]> {
+  try {
+    const db = await initDb();
+    const today = new Date().toISOString().split('T')[0];
+    const rows = await db`SELECT * FROM activity_log WHERE timestamp LIKE ${today + '%'} ORDER BY timestamp DESC` as ActivityLog[];
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
+export async function createUser(username: string, password: string, role: 'admin' | 'user' = 'user', createdBy?: string): Promise<{ success: boolean; error?: string; user?: User }> {
+  try {
+    const db = await initDb();
     const hashedPassword = hashPassword(password);
     const id = generateId();
     const now = new Date().toISOString();
     try {
-      await db`INSERT INTO users (id, username, password, createdAt, lastLogin) VALUES (${id}, ${username}, ${hashedPassword}, ${now}, NULL)`;
+      await db`INSERT INTO users (id, username, password, role, created_by, createdAt, lastLogin) VALUES (${id}, ${username}, ${hashedPassword}, ${role}, ${createdBy || null}, ${now}, NULL)`;
     } catch (err: any) {
       if (err.message?.includes('duplicate') || err.message?.includes('UNIQUE')) {
         return { success: false, error: 'Nom d\'utilisateur deja pris' };
@@ -103,7 +157,7 @@ export async function createUser(username: string, password: string): Promise<{ 
       throw err;
     }
     await db`INSERT INTO global_data (id, data, updated_at) VALUES ('global', ${JSON.stringify(DEFAULT_GLOBAL_DATA)}, ${now}) ON CONFLICT (id) DO NOTHING`;
-    return { success: true, user: { id, username, password: '', createdAt: now, lastLogin: null } };
+    return { success: true, user: { id, username, password: '', role, created_by: createdBy || null, createdAt: now, lastLogin: null } };
   } catch (error) {
     return { success: false, error: 'Erreur serveur' };
   }
@@ -113,13 +167,13 @@ export async function authenticateUser(username: string, password: string): Prom
   try {
     const db = await initDb();
     const hashedPassword = hashPassword(password);
-    const result = await db`SELECT id, username, password, createdAt, lastLogin FROM users WHERE username = ${username}` as User[];
+    const result = await db`SELECT id, username, password, role, created_by, createdAt, lastLogin FROM users WHERE username = ${username}` as User[];
     const row = result[0];
     if (!row) return { success: false, error: 'Identifiants incorrects' };
     if (row.password !== hashedPassword) return { success: false, error: 'Identifiants incorrects' };
     await db`UPDATE users SET lastLogin = ${new Date().toISOString()} WHERE id = ${row.id}`;
     const data = await getGlobalData();
-    return { success: true, user: { id: row.id, username: row.username, password: row.password, createdAt: row.createdAt, lastLogin: row.lastLogin, data } };
+    return { success: true, user: { id: row.id, username: row.username, password: row.password, role: row.role, created_by: row.created_by, createdAt: row.createdAt, lastLogin: row.lastLogin, data } };
   } catch (error) {
     return { success: false, error: 'Erreur serveur' };
   }
@@ -136,7 +190,7 @@ export async function getGlobalData(): Promise<GlobalData> {
   } catch { return DEFAULT_GLOBAL_DATA; }
 }
 
-export async function updateGlobalData(data: Partial<GlobalData>): Promise<{ success: boolean; error?: string }> {
+export async function updateGlobalData(data: Partial<GlobalData>, updatedBy?: string): Promise<{ success: boolean; error?: string }> {
   try {
     const db = await initDb();
     const now = new Date().toISOString();
@@ -150,7 +204,7 @@ export async function updateGlobalData(data: Partial<GlobalData>): Promise<{ suc
       notifications: data.notifications ?? current.notifications,
       parametres: data.parametres ?? current.parametres,
     };
-    await db`INSERT INTO global_data (id, data, updated_at) VALUES ('global', ${JSON.stringify(mergedData)}, ${now}) ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify(mergedData)}, updated_at = ${now}`;
+    await db`INSERT INTO global_data (id, data, updated_at, updated_by) VALUES ('global', ${JSON.stringify(mergedData)}, ${now}, ${updatedBy || null}) ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify(mergedData)}, updated_at = ${now}, updated_by = ${updatedBy || null}`;
     return { success: true };
   } catch { return { success: false, error: 'Erreur serveur' }; }
 }
@@ -158,34 +212,19 @@ export async function updateGlobalData(data: Partial<GlobalData>): Promise<{ suc
 export async function getUserData(userId: string): Promise<DatabaseUser | null> {
   try {
     const db = await initDb();
-    const result = await db`SELECT id, username, password, createdAt, lastLogin FROM users WHERE id = ${userId}` as User[];
+    const result = await db`SELECT id, username, password, role, created_by, createdAt, lastLogin FROM users WHERE id = ${userId}` as User[];
     const row = result[0];
     if (!row) return null;
     const data = await getGlobalData();
-    return { id: row.id, username: row.username, password: row.password, createdAt: row.createdAt, lastLogin: row.lastLogin, data };
+    return { id: row.id, username: row.username, password: row.password, role: row.role, created_by: row.created_by, createdAt: row.createdAt, lastLogin: row.lastLogin, data };
   } catch { return null; }
 }
 
-export async function getUserByUsername(username: string): Promise<DatabaseUser | null> {
+export async function getAllUsers(): Promise<{ id: string; username: string; role: string; created_by: string | null; createdAt: string; lastLogin: string | null }[]> {
   try {
     const db = await initDb();
-    const result = await db`SELECT id, username, password, createdAt, lastLogin FROM users WHERE username = ${username}` as User[];
-    const row = result[0];
-    if (!row) return null;
-    const data = await getGlobalData();
-    return { id: row.id, username: row.username, password: row.password, createdAt: row.createdAt, lastLogin: row.lastLogin, data };
-  } catch { return null; }
-}
-
-export async function updateUserData(userId: string, data: Partial<GlobalData>): Promise<{ success: boolean; error?: string }> {
-  return updateGlobalData(data);
-}
-
-export async function getAllUsers(): Promise<{ id: string; username: string; createdAt: string; lastLogin: string | null }[]> {
-  try {
-    const db = await initDb();
-    const rows = await db`SELECT id, username, createdAt, lastLogin FROM users` as { id: string; username: string; createdAt: string; lastLogin: string | null }[];
-    return rows.map((row) => ({ id: row.id, username: row.username, createdAt: row.createdAt, lastLogin: row.lastLogin }));
+    const rows = await db`SELECT id, username, role, created_by, createdAt, lastLogin FROM users` as { id: string; username: string; role: string; created_by: string | null; createdAt: string; lastLogin: string | null }[];
+    return rows.map((row) => ({ id: row.id, username: row.username, role: row.role, created_by: row.created_by, createdAt: row.createdAt, lastLogin: row.lastLogin }));
   } catch { return []; }
 }
 
@@ -193,6 +232,15 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; er
   try {
     const db = await initDb();
     await db`DELETE FROM users WHERE id = ${userId}`;
+    return { success: true };
+  } catch { return { success: false, error: 'Erreur serveur' }; }
+}
+
+export async function updateAdminCredentials(adminId: string, newUsername: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const db = await initDb();
+    const hashedPassword = hashPassword(newPassword);
+    await db`UPDATE users SET username = ${newUsername}, password = ${hashedPassword} WHERE id = ${adminId} AND role = 'admin'`;
     return { success: true };
   } catch { return { success: false, error: 'Erreur serveur' }; }
 }

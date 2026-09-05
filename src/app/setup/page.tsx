@@ -12,10 +12,9 @@ export default function SetupPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
-  const { isAuthenticated, register } = useAuthStore();
+  const { isAuthenticated, role, register } = useAuthStore();
 
   useEffect(() => {
-    // Check if admin already exists
     const checkAdmin = async () => {
       try {
         const response = await fetch('/api/auth', {
@@ -27,50 +26,41 @@ export default function SetupPage() {
         if (result.hasAdmin) {
           redirect('/admin');
         }
-      } catch {
-        // If API fails, allow setup
-      } finally {
-        setChecking(false);
-      }
+      } catch {}
+      setChecking(false);
     };
     checkAdmin();
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && role === 'admin') {
       redirect('/dashboard');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, role]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     if (!username.trim() || !password.trim()) {
       setError('Veuillez remplir tous les champs');
       setLoading(false);
       return;
     }
-
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       setLoading(false);
       return;
     }
-
     if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères');
+      setError('Le mot de passe doit contenir au moins 6 caracteres');
       setLoading(false);
       return;
     }
-
     const result = await register(username.trim(), password);
-
     if (!result.success) {
       setError(result.error || 'Erreur lors de la creation du compte');
     }
-
     setLoading(false);
   };
 
@@ -91,49 +81,22 @@ export default function SetupPage() {
         <div className="text-center mb-6">
           <img src="/icon-192.png" alt="Hangar Location" className="w-16 h-16 mx-auto mb-4 rounded-xl" />
           <h1 className="text-2xl font-bold text-gray-900">Configuration Initiale</h1>
-          <p className="text-gray-500 mt-2">
-            Creez le compte administrateur
+          <p className="text-gray-500 mt-2">Creer le compte administrateur (Directeur)</p>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <p className="text-sm text-blue-800">
+            <strong>Admin (Directeur):</strong> Peut voir les activites, gerer les utilisateurs, modifier les identifiants et acceder a toutes les fonctionnalites.
           </p>
         </div>
-
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-          <p className="text-sm text-yellow-800">
-            <strong>Important:</strong> Ce compte aura un acces complet a toutes les donnees.
-            Seul l&apos;administraur peut voir les details des locations (qui a loue quoi).
-          </p>
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Nom d&apos;utilisateur"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Choisissez un nom d&apos;utilisateur"
-          />
-          <Input
-            label="Mot de passe"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Choisissez un mot de passe"
-          />
-          <Input
-            label="Confirmer le mot de passe"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirmez le mot de passe"
-          />
+          <Input label="Nom d&apos;utilisateur" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Nom d\'utilisateur admin" />
+          <Input label="Mot de passe" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mot de passe" />
+          <Input label="Confirmer le mot de passe" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirmer" />
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" className="w-full" loading={loading}>
-            Creer le compte administrateur
-          </Button>
+          <Button type="submit" className="w-full" loading={loading}>Creer le compte admin</Button>
         </form>
-
         <div className="mt-4 text-center">
-          <a href="/" className="text-sm text-gray-500 hover:text-gray-700">
-            Retour au site public
-          </a>
+          <a href="/" className="text-sm text-gray-500 hover:text-gray-700">Retour au site public</a>
         </div>
       </div>
     </div>
