@@ -5,6 +5,8 @@ import { useVehicules, useContrats, useNotifications, useBusinessRules, useLocat
 import { Header, StatCard, Button } from '@/components';
 import { executerToutesLesVerifications } from '@/business-rules';
 import { useParametresStore } from '@/lib/stores/parametres';
+import { useAuthStore } from '@/lib/stores/auth';
+import { syncService } from '@/lib/sync';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -14,12 +16,22 @@ export default function DashboardPage() {
   const notifications = useNotifications();
   const locataires = useLocataires();
   const [loading, setLoading] = useState(false);
+  const [syncState, setSyncState] = useState('');
   const { adminId } = useParametresStore();
+  const { username, role } = useAuthStore();
+  const isAdmin = role === 'admin';
 
   const handleVerifier = async () => {
     setLoading(true);
     await executerToutesLesVerifications();
     setLoading(false);
+  };
+
+  const handleSync = async () => {
+    setSyncState('Synchronisation...');
+    const result = await syncService.syncWithServer();
+    setSyncState(result.message);
+    setTimeout(() => setSyncState(''), 4000);
   };
 
   const stats = {
@@ -39,11 +51,17 @@ export default function DashboardPage() {
   return (
     <div>
       <Header
-        title={`Tableau de bord - ${adminId}`}
+        title={isAdmin ? `Tableau de bord - Directeur` : `Tableau de bord - ${username || adminId}`}
         action={
-          <Button onClick={handleVerifier} loading={loading} size="sm">
-            Vérifier les alertes
-          </Button>
+          <div className="flex items-center gap-2">
+            {syncState && <span className="text-xs text-gray-500">{syncState}</span>}
+            <Button onClick={handleSync} size="sm" variant="secondary">
+              Synchroniser
+            </Button>
+            <Button onClick={handleVerifier} loading={loading} size="sm">
+              Vérifier les alertes
+            </Button>
+          </div>
         }
       />
 

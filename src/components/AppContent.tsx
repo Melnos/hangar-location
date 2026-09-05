@@ -3,12 +3,17 @@
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth';
 import { Sidebar, FloatingNav, MobileHeader } from '@/components';
+import { useAutoSync } from '@/hooks/useAutoSync';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isAuthenticated, role } = useAuthStore();
+  const isAdmin = role === 'admin';
 
-  if (pathname === '/' || pathname === '/admin' || pathname === '/setup') {
+  // Synchronisation automatique dès qu'un utilisateur est connecté
+  useAutoSync(30);
+
+  if (pathname === '/' || pathname === '/admin' || pathname === '/setup' || pathname === '/reset-admin') {
     return <>{children}</>;
   }
 
