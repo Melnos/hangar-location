@@ -10,16 +10,18 @@ export async function GET() {
     const globalData = await getGlobalData();
 
     // Return only public vehicle data (no locataire info, no contrat details)
-    const publicVehicules = (globalData.vehicules || []).map((v: any) => ({
+    const deleted = globalData.deleted?.vehicules || [];
+    const publicVehicules = (globalData.vehicules || [])
+      .filter((v: any) => v?.id && !deleted.includes(v.id))
+      .map((v: any) => ({
       id: v.id,
-      nom: v.nom,
-      plaque: v.plaque,
-      couleur: v.couleur,
-      statut: v.statut,
-      tarif_journalier: v.tarif_journalier,
-      km_depart: v.km_depart,
-      photos: v.photos,
-      updated_at: v.updated_at,
+      nom: v.nom || 'Vehicule sans nom',
+      plaque: v.plaque || 'Non renseignee',
+      couleur: v.couleur || 'Non renseignee',
+      statut: v.statut || 'hors_service',
+      tarif_journalier: Number(v.tarif_journalier) || 0,
+      photos: Array.isArray(v.photos) ? v.photos : [],
+      updated_at: v.updated_at || null,
     }));
 
     return NextResponse.json({

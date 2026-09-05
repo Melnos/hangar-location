@@ -1,5 +1,6 @@
 import { db } from '../lib/db';
 import { generateId, now } from '../lib/utils';
+import { syncService } from '../lib/sync';
 import type { Contrat } from '../models';
 
 export interface CreateContratInput {
@@ -72,5 +73,6 @@ export const contratRepository = {
 
   async delete(id: string): Promise<void> {
     await db.contrats.delete(id);
+    syncService.markDeleted('contrats', id);
   },
 };

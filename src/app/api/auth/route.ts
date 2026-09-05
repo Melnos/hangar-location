@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createUser, authenticateUser, getAllUsers, getActivityLog, getActivityLogToday, logActivity, updateAdminCredentials, resetAdminCredentials } from '@/lib/server/database';
+import { createUser, authenticateUser, getAllUsers, getActivityLog, getActivityLogToday, logActivity, updateAdminCredentials, resetAdminCredentials, deleteUser, getUserByUsername } from '@/lib/server/database';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, username, password, role, createdBy, adminId } = body;
+    const { action, username, password, role, createdBy, adminId, userId } = body;
+
+    const authorization = request.headers.get('authorization') || '';
+    const tokenUsername = authorization.startsWith('Basic ')
+      ? Buffer.from(authorization.slice(6), 'base64').toString('utf-8').split(':')[0]
+      : '';
 
     if (action === 'check') {
       const users = await getAllUsers();
@@ -36,6 +41,24 @@ export async function POST(request: NextRequest) {
     if (action === 'get_users') {
       const users = await getAllUsers();
       return NextResponse.json({ success: true, users });
+    }
+
+    if (action === 'delete_user') {
+      const admin = tokenUsername ? await getUserByUsername(tokenUsername) : null;
+      if (!admin || admin.role !== 'admin' || admin.id !== adminId) {
+        return NextResponse.json({ success: false, error: 'Action reservee a l\'administrateur' }, { status: 403 });
+      }
+      if (!userId) {
+        return NextResponse.json({ success: false, error: 'Utilisateur manquant' }, { status: 400 });
+      }
+      if (userId === admin.id) {
+        return NextResponse.json({ success: false, error: 'Le compte administrateur connecte ne peut pas etre supprime' }, { status: 400 });
+      }
+      const result = await deleteUser(userId);
+      if (result.success) {
+        await logActivity(admin.id, admin.username, 'Suppression utilisateur', userId);
+      }
+      return NextResponse.json(result, { status: result.success ? 200 : 400 });
     }
 
     if (!username || !password) {

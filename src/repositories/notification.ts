@@ -1,4 +1,5 @@
 import { db } from '../lib/db';
+import { syncService } from '../lib/sync';
 import { generateId, now } from '../lib/utils';
 import type { Notification, TypeNotification } from '../models';
 
@@ -50,9 +51,12 @@ export const notificationRepository = {
 
   async delete(id: string): Promise<void> {
     await db.notifications.delete(id);
+    syncService.markDeleted('notifications', id);
   },
 
   async deleteByReference(referenceId: string): Promise<void> {
-    await db.notifications.where('reference_id').equals(referenceId).delete();
+    const notifications = await db.notifications.where('reference_id').equals(referenceId).toArray();
+    await db.notifications.bulkDelete(notifications.map((notification) => notification.id));
+    notifications.forEach((notification) => syncService.markDeleted('notifications', notification.id));
   },
 };

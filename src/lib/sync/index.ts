@@ -18,6 +18,11 @@ export interface SyncResult {
 }
 
 const SYNC_STATE_KEY = 'sync-state';
+const DELETED_KEY = 'sync-deleted-ids';
+
+const SYNC_TABLES = ['vehicules', 'locataires', 'contrats', 'documents_vehicule', 'maintenances', 'notifications'] as const;
+export type SyncTable = typeof SYNC_TABLES[number];
+export type DeletedMap = Partial<Record<SyncTable, string[]>>;
 
 export const syncService = {
   async getSyncState(): Promise<{ lastSync: string | null }> {
@@ -30,6 +35,32 @@ export const syncService = {
 
   async saveSyncState(state: { lastSync: string | null }): Promise<void> {
     localStorage.setItem(SYNC_STATE_KEY, JSON.stringify(state));
+  },
+
+  // ==== Registre des suppressions (pour propager les deletes aux autres appareils) ====
+  getDeleted(): DeletedMap {
+    try {
+      return JSON.parse(localStorage.getItem(DELETED_KEY) || '{}');
+    } catch {
+      return {};
+    }
+  },
+
+  markDeleted(table: SyncTable, id: string): void {
+    if (typeof window === 'undefined') return;
+    const d = this.getDeleted();
+    if (!d[table]) d[table] = [];
+    if (!d[table]!.includes(id)) d[table]!.push(id);
+    localStorage.setItem(DELETED_KEY, JSON.stringify(d));
+  },
+
+  mergeDeleted(serverDeleted?: DeletedMap): void {
+    if (typeof window === 'undefined' || !serverDeleted) return;
+    const d = this.getDeleted();
+    for (const t of Object.keys(serverDeleted) as SyncTable[]) {
+      d[t] = Array.from(new Set([...(d[t] || []), ...(serverDeleted[t] || [])]));
+    }
+    localStorage.setItem(DELETED_KEY, JSON.stringify(d));
   },
 
   // Pull global data from server (admin only)
@@ -87,7 +118,7 @@ export const syncService = {
           'x-user-id': userId,
           'Authorization': `Basic ${token}`,
         },
-        body: JSON.stringify({ data: localData }),
+        body: JSON.stringify({ data: { ...localData, deleted: this.getDeleted() } }),
       });
 
       if (!response.ok) {
@@ -124,7 +155,7 @@ export const syncService = {
     return { success: true, message: 'Synchronisation complete reussie' };
   },
 
-  // Apply server data to local database
+  // Apply server data to local database (+ applique les suppressions du serveur)
   async applyServerData(data: any): Promise<void> {
     if (data.vehicules) await db.vehicules.bulkPut(data.vehicules);
     if (data.locataires) await db.locataires.bulkPut(data.locataires);
@@ -132,6 +163,16 @@ export const syncService = {
     if (data.documents_vehicule) await db.documents_vehicule.bulkPut(data.documents_vehicule);
     if (data.maintenances) await db.maintenances.bulkPut(data.maintenances);
     if (data.notifications) await db.notifications.bulkPut(data.notifications);
+
+    // Supprime localement les enregistrements supprimes par un autre appareil
+    const deleted: DeletedMap = data.deleted || {};
+    for (const t of SYNC_TABLES) {
+      const ids = deleted[t] || [];
+      if (ids.length > 0) {
+        await (db as any)[t].bulkDelete(ids);
+      }
+    }
+    this.mergeDeleted(deleted);
   },
 
   // Export all local data for sync

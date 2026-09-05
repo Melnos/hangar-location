@@ -90,6 +90,7 @@ export interface GlobalData {
   maintenances: any[];
   notifications: any[];
   parametres: any;
+  deleted?: Record<string, string[]>;
 }
 
 export interface ActivityLog {
@@ -233,14 +234,26 @@ export async function updateGlobalData(data: Partial<GlobalData>, updatedBy?: st
       return Array.from(map.values());
     };
 
+    // Registre des suppressions: union des registres existant et entrant,
+    // puis filtrage des enregistrements supprimes de chaque table.
+    const registry: Record<string, string[]> = { ...(current.deleted || {}) };
+    const incomingDeleted: Record<string, string[]> = (data as any).deleted || {};
+    for (const key of Object.keys(incomingDeleted)) {
+      const set = new Set<string>([...(registry[key] || []), ...(incomingDeleted[key] || [])]);
+      registry[key] = Array.from(set);
+    }
+    const withoutDeleted = (arr: any[], table: string): any[] =>
+      (arr || []).filter((r: any) => r && r.id && !(registry[table] || []).includes(r.id));
+
     const mergedData: GlobalData = {
-      vehicules: data.vehicules ? mergeById(data.vehicules, current.vehicules) : current.vehicules,
-      locataires: data.locataires ? mergeById(data.locataires, current.locataires) : current.locataires,
-      contrats: data.contrats ? mergeById(data.contrats, current.contrats) : current.contrats,
-      documents_vehicule: data.documents_vehicule ? mergeById(data.documents_vehicule, current.documents_vehicule) : current.documents_vehicule,
-      maintenances: data.maintenances ? mergeById(data.maintenances, current.maintenances) : current.maintenances,
-      notifications: data.notifications ? mergeById(data.notifications, current.notifications) : current.notifications,
+      vehicules: withoutDeleted(data.vehicules ? mergeById(data.vehicules, current.vehicules) : current.vehicules, 'vehicules'),
+      locataires: withoutDeleted(data.locataires ? mergeById(data.locataires, current.locataires) : current.locataires, 'locataires'),
+      contrats: withoutDeleted(data.contrats ? mergeById(data.contrats, current.contrats) : current.contrats, 'contrats'),
+      documents_vehicule: withoutDeleted(data.documents_vehicule ? mergeById(data.documents_vehicule, current.documents_vehicule) : current.documents_vehicule, 'documents_vehicule'),
+      maintenances: withoutDeleted(data.maintenances ? mergeById(data.maintenances, current.maintenances) : current.maintenances, 'maintenances'),
+      notifications: withoutDeleted(data.notifications ? mergeById(data.notifications, current.notifications) : current.notifications, 'notifications'),
       parametres: data.parametres ?? current.parametres,
+      deleted: registry,
     };
     await db`INSERT INTO global_data (id, data, updated_at, updated_by) VALUES ('global', ${JSON.stringify(mergedData)}, ${now}, ${updatedBy || null}) ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify(mergedData)}, updated_at = ${now}, updated_by = ${updatedBy || null}`;
     return { success: true };

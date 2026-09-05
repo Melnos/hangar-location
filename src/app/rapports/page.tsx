@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useContrats, useVehicules, useLocataires } from '@/hooks/useDatabase';
 import { Header, Button, Select, Input } from '@/components';
 import { useParametresStore } from '@/lib/stores/parametres';
+import { Download } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Contrat, Vehicule, Locataire } from '@/models';
@@ -113,14 +114,19 @@ export default function RapportsPage() {
     <div>
       <Header
         title="Rapports"
-        action={
-          <Button onClick={generatePDF} disabled={contratsFiltres.length === 0}>
-            Télécharger PDF
-          </Button>
-        }
       />
 
       <div className="p-6">
+        <div className="mb-6 flex flex-col gap-3 rounded-lg border border-blue-100 bg-blue-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-semibold text-gray-900">Rapport de location</h2>
+            <p className="text-sm text-gray-600">{contratsFiltres.length} contrat(s) correspondent aux filtres.</p>
+          </div>
+          <Button onClick={generatePDF} disabled={contratsFiltres.length === 0} className="w-full sm:w-auto">
+            <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+            Télécharger PDF
+          </Button>
+        </div>
         <div className="bg-[#f5f5dc] rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtres</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

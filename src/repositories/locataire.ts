@@ -1,5 +1,6 @@
 import { db } from '../lib/db';
 import { generateId, now } from '../lib/utils';
+import { syncService } from '../lib/sync';
 import type { Locataire } from '../models';
 
 export interface CreateLocataireInput {
@@ -57,6 +58,7 @@ export const locataireRepository = {
 
   async delete(id: string): Promise<void> {
     await db.locataires.delete(id);
+    syncService.markDeleted('locataires', id);
   },
 
   async search(query: string): Promise<Locataire[]> {

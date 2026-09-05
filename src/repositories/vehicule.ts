@@ -1,5 +1,6 @@
 import { db } from '../lib/db';
 import { generateId, now } from '../lib/utils';
+import { syncService } from '../lib/sync';
 import type { Vehicule, StatutVehicule } from '../models';
 
 export interface CreateVehiculeInput {
@@ -76,6 +77,7 @@ export const vehiculeRepository = {
 
   async delete(id: string): Promise<void> {
     await db.vehicules.delete(id);
+    syncService.markDeleted('vehicules', id);
   },
 
   async search(query: string): Promise<Vehicule[]> {

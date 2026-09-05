@@ -1,5 +1,6 @@
 import { db } from '../lib/db';
 import { generateId, now } from '../lib/utils';
+import { syncService } from '../lib/sync';
 import type { DocumentVehicule, TypeDocument } from '../models';
 
 export interface CreateDocumentInput {
@@ -64,5 +65,6 @@ export const documentRepository = {
 
   async delete(id: string): Promise<void> {
     await db.documents_vehicule.delete(id);
+    syncService.markDeleted('documents_vehicule', id);
   },
 };
