@@ -121,15 +121,18 @@ export default function ParametresPage() {
     setAdminSaved(false);
   };
 
-  const handleSaveAdminData = () => {
+  const handleSaveAdminData = async () => {
     setIsSavingAdmin(true);
     setAdminData(localAdminData);
-    setTimeout(async () => {
-      await syncService.syncWithServer();
-      setIsSavingAdmin(false);
-      setAdminSaved(true);
+
+    const result = await syncService.pushToServer();
+    setIsSavingAdmin(false);
+    setAdminSaved(result.success);
+    setSyncStatus(result.message);
+    setSyncStatusType(result.success ? 'success' : 'error');
+    if (result.success) {
       setTimeout(() => setAdminSaved(false), 3000);
-    }, 500);
+    }
   };
 
   const handleLogout = () => {
