@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Utilisateur inconnu' }, { status: 401 });
     }
     if (data.parametres && currentUser.role !== 'admin') {
-      return NextResponse.json({ success: false, error: 'Seul l administrateur peut modifier les donnees administrateur' }, { status: 403 });
+      delete data.parametres;
     }
 
     // Si l'utilisateur n'existe pas encore, le créer comme employé

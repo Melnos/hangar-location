@@ -188,8 +188,11 @@ export const syncService = {
     data.documents_vehicule = await db.documents_vehicule.toArray();
     data.maintenances = await db.maintenances.toArray();
     data.notifications = await db.notifications.toArray();
-    const { adminId, adminData } = useParametresStore.getState();
-    data.parametres = { adminId, adminData };
+    const { role } = useAuthStore.getState();
+    if (role === 'admin') {
+      const { adminId, adminData } = useParametresStore.getState();
+      data.parametres = { adminId, adminData };
+    }
     return data;
   },
 
