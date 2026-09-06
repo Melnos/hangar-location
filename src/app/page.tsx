@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/stores/auth';
+import { formatFCFA } from '@/lib/utils';
 
 interface PublicVehicule {
   id: string;
@@ -110,7 +111,7 @@ export default function PublicPage() {
           <div className="bg-white rounded-lg shadow p-4">
             <p className="text-sm text-gray-500">Tarif journalier min</p>
             <p className="text-2xl font-bold text-gray-900">
-              {vehicules.length > 0 ? `${Math.min(...vehicules.map(v => v.tarif_journalier))}€` : '-'}
+              {vehicules.length > 0 ? formatFCFA(Math.min(...vehicules.map(v => v.tarif_journalier))) : '-'}
             </p>
           </div>
         </div>
@@ -141,7 +142,7 @@ export default function PublicPage() {
                       <p><span className="font-medium">Couleur:</span> {v.couleur}</p>
                     </div>
                     <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                      <span className="text-2xl font-bold text-blue-600">{v.tarif_journalier}€<span className="text-sm text-gray-500">/jour</span></span>
+                      <span className="text-2xl font-bold text-blue-600">{formatFCFA(v.tarif_journalier)}<span className="text-sm text-gray-500">/jour</span></span>
                       {v.statut === 'disponible' && <span className="text-green-600 text-sm font-medium">Disponible</span>}
                       {v.statut === 'en_location' && <span className="text-blue-600 text-sm font-medium">Loue</span>}
                     </div>

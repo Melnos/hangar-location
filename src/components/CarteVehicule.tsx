@@ -1,6 +1,7 @@
 'use client';
 
 import type { Vehicule } from '@/models';
+import { formatFCFA } from '@/lib/utils';
 import { BadgeStatut } from './BadgeStatut';
 import Link from 'next/link';
 
@@ -27,7 +28,7 @@ export function CarteVehicule({ vehicule }: CarteVehiculeProps) {
             <span className="font-medium">Km:</span> {vehicule.km_depart.toLocaleString()} km
           </p>
           <p>
-            <span className="font-medium">Tarif:</span> {vehicule.tarif_journalier.toLocaleString()} / jour
+            <span className="font-medium">Tarif:</span> {formatFCFA(vehicule.tarif_journalier)} / jour
           </p>
         </div>
       </div>

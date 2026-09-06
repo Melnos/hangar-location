@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/stores/auth';
 const navigation = [
   { name: 'Accueil', href: '/dashboard', icon: 'home' },
   { name: 'Vehicules', href: '/vehicules', icon: 'car' },
+    { name: 'Locataires', href: '/locataires', icon: 'users' },
   { name: 'Contrats', href: '/contrats', icon: 'document' },
   { name: 'Rapports', href: '/rapports', icon: 'chart' },
   { name: 'Admin', href: '/admin-panel', icon: 'shield', adminOnly: true },
@@ -29,6 +30,12 @@ function getIcon(icon: string, isActive: boolean) {
         </svg>
       );
     case 'car':
+          case 'users':
+            return (
+              <svg className="w-6 h-6" fill={isActive ? color : 'none'} stroke={color} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 2.5 : 2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            );
       return (
         <svg className="w-6 h-6" fill={isActive ? color : 'none'} stroke={color} viewBox="0 0 24 24">
           <path
@@ -101,7 +108,7 @@ export function FloatingNav() {
         <div
           className="pointer-events-auto mb-5 px-3 py-2 flex items-center gap-1"
           style={{
-            background: 'rgba(245, 245, 220, 0.75)',
+            background: 'rgba(255, 255, 255, 0.88)',
             backdropFilter: 'blur(20px) saturate(180%)',
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
             borderRadius: 999,

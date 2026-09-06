@@ -36,6 +36,11 @@ export default function VehiculesPage() {
       />
 
       <div className="p-6">
+                <div className="mb-5 md:hidden">
+                  <Link href="/vehicules/nouveau" className="block">
+                    <Button className="w-full">Nouveau véhicule</Button>
+                  </Link>
+                </div>
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1">
             <Input

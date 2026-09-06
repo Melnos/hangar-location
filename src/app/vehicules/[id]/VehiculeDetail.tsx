@@ -5,6 +5,7 @@ import { useVehicule, useDocumentsVehicule, useMaintenancesVehicule } from '@/ho
 import { Header, BadgeStatut, Button, Input, Modal } from '@/components';
 import { vehiculeRepository, documentRepository, maintenanceRepository } from '@/repositories';
 import { useRouter } from 'next/navigation';
+import { formatFCFA } from '@/lib/utils';
 import Link from 'next/link';
 
 interface Props {
@@ -98,7 +99,7 @@ export default function VehiculeDetailPage({ params }: Props) {
             </div>
             <div>
               <p className="text-gray-500">Tarif journalier</p>
-              <p className="font-medium">{vehicule.tarif_journalier.toLocaleString()}</p>
+              <p className="font-medium">{formatFCFA(vehicule.tarif_journalier)}</p>
             </div>
             <div>
               <p className="text-gray-500">Date d'entrée</p>

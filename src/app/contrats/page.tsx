@@ -77,6 +77,9 @@ export default function ContratsPage() {
       />
 
       <div className="p-6">
+                <div className="mb-5 md:hidden">
+                  <Button className="w-full" onClick={() => setIsNewModalOpen(true)}>Nouveau contrat</Button>
+                </div>
         {contrats && contrats.length > 0 ? (
           <div className="bg-[#f5f5dc] rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">

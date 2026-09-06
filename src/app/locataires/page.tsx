@@ -54,6 +54,9 @@ export default function LocatairesPage() {
       />
 
       <div className="p-6">
+                <div className="mb-5 md:hidden">
+                  <Button className="w-full" onClick={() => setIsModalOpen(true)}>Nouveau locataire</Button>
+                </div>
         <div className="mb-6">
           <Input
             label=""

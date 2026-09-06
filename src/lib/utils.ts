@@ -8,6 +8,10 @@ export function now(): string {
   return new Date().toISOString();
 }
 
+export function formatFCFA(value: number): string {
+  return `${new Intl.NumberFormat('fr-FR').format(value)} FCFA`;
+}
+
 export function daysBetween(date1: string, date2: string): number {
   const d1 = new Date(date1);
   const d2 = new Date(date2);

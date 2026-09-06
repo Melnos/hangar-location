@@ -8,6 +8,7 @@ import { Download } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Contrat, Vehicule, Locataire } from '@/models';
+import { formatFCFA } from '@/lib/utils';
 
 type FiltrePeriode = 'tous' | 'semaine' | 'mois' | 'vehicule' | 'client';
 
@@ -79,8 +80,8 @@ export default function RapportsPage() {
     doc.text(`Total contrats: ${contratsFiltres.length}`, 14, 64);
     doc.text(`Contrats en cours: ${contratsEnCours}`, 14, 70);
     doc.text(`Contrats clôturés: ${contratsClotures}`, 14, 76);
-    doc.text(`Total revenus: ${totalRevenus.toLocaleString()}`, 14, 82);
-    doc.text(`Total pénalités: ${totalPenalites.toLocaleString()}`, 14, 88);
+    doc.text(`Total revenus: ${formatFCFA(totalRevenus)}`, 14, 82);
+    doc.text(`Total pénalités: ${formatFCFA(totalPenalites)}`, 14, 88);
 
     const tableData = contratsFiltres.map((c) => {
       const v = getVehicule(c.vehicule_id);
@@ -92,8 +93,8 @@ export default function RapportsPage() {
         new Date(c.date_debut).toLocaleDateString('fr-FR'),
         new Date(c.date_fin_prevue).toLocaleDateString('fr-FR'),
         c.date_retour_reelle ? new Date(c.date_retour_reelle).toLocaleDateString('fr-FR') : 'En cours',
-        c.prix_total.toLocaleString(),
-        c.penalite_retard > 0 ? c.penalite_retard.toLocaleString() : '-',
+        formatFCFA(c.prix_total),
+        c.penalite_retard > 0 ? formatFCFA(c.penalite_retard) : '-',
       ];
     });
 
@@ -196,11 +197,11 @@ export default function RapportsPage() {
           </div>
           <div className="bg-[#f5f5dc] rounded-lg shadow-sm border border-gray-200 p-4">
             <p className="text-sm text-gray-500">Revenus</p>
-            <p className="text-2xl font-bold text-green-600">{totalRevenus.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-green-600">{formatFCFA(totalRevenus)}</p>
           </div>
           <div className="bg-[#f5f5dc] rounded-lg shadow-sm border border-gray-200 p-4">
             <p className="text-sm text-gray-500">Pénalités</p>
-            <p className="text-2xl font-bold text-red-600">{totalPenalites.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-red-600">{formatFCFA(totalPenalites)}</p>
           </div>
         </div>
 
@@ -264,10 +265,10 @@ export default function RapportsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
-                      {contrat.prix_total.toLocaleString()}
+                      {formatFCFA(contrat.prix_total)}
                     </td>
                     <td className="px-4 py-3 text-sm text-right text-red-600">
-                      {contrat.penalite_retard > 0 ? contrat.penalite_retard.toLocaleString() : '-'}
+                      {contrat.penalite_retard > 0 ? formatFCFA(contrat.penalite_retard) : '-'}
                     </td>
                   </tr>
                 );
