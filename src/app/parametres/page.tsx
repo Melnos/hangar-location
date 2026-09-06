@@ -6,7 +6,6 @@ import { useNotifications } from '@/hooks/useDatabase';
 import { notificationRepository } from '@/repositories';
 import { useParametresStore, type AdminData } from '@/lib/stores/parametres';
 import { useAuthStore } from '@/lib/stores/auth';
-import { redirect } from 'next/navigation';
 import { syncService, startAutoSync, stopAutoSync } from '@/lib/sync';
 import { notificationService } from '@/lib/notifications';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -137,10 +136,6 @@ export default function ParametresPage() {
     logout();
   };
 
-  if (role !== 'admin') {
-    redirect('/dashboard');
-  }
-
   return (
     <div>
       <Header title="Paramètres" />
@@ -167,9 +162,10 @@ export default function ParametresPage() {
           </div>
         </div>
 
-        <div className="bg-[#f5f5dc] rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Données administrateur</h2>
-          <div className="space-y-4">
+        {role === 'admin' && (
+          <div className="bg-[#f5f5dc] rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Données administrateur</h2>
+            <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 label="Nom"
@@ -228,8 +224,9 @@ export default function ParametresPage() {
                 </span>
               )}
             </div>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="bg-[#f5f5dc] rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Notifications</h2>
