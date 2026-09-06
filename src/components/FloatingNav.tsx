@@ -108,7 +108,7 @@ export function FloatingNav() {
         <div
           className="pointer-events-auto mb-5 px-3 py-2 flex items-center gap-1"
           style={{
-            background: 'rgba(255, 255, 255, 0.88)',
+            background: 'rgba(245, 245, 220, 0.88)',
             backdropFilter: 'blur(20px) saturate(180%)',
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
             borderRadius: 999,
