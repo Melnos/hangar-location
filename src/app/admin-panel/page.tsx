@@ -159,7 +159,7 @@ export default function AdminPanelPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-[#f5f5dc] p-4 sm:p-6">
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 rounded-2xl bg-slate-950 p-5 text-white shadow-lg sm:p-7">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

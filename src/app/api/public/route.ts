@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getGlobalData } from '@/lib/server/database';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // Public API - returns only public vehicle information
 // No authentication required
@@ -29,7 +31,7 @@ export async function GET() {
       vehicules: publicVehicules,
       entreprise: globalData.parametres?.adminData || null,
       lastUpdated: new Date().toISOString(),
-    });
+    }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Erreur serveur' }, { status: 500 });
   }

@@ -31,7 +31,7 @@ export default function PublicPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/public');
+        const res = await fetch('/api/public', { cache: 'no-store' });
         const result = await res.json();
         if (result.success && result.vehicules) {
           setVehicules(result.vehicules);

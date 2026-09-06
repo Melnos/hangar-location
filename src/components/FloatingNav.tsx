@@ -8,7 +8,7 @@ import { useAuthStore } from '@/lib/stores/auth';
 const navigation = [
   { name: 'Accueil', href: '/dashboard', icon: 'home' },
   { name: 'Vehicules', href: '/vehicules', icon: 'car' },
-    { name: 'Locataires', href: '/locataires', icon: 'users' },
+  { name: 'Locataires', href: '/locataires', icon: 'users' },
   { name: 'Contrats', href: '/contrats', icon: 'document' },
   { name: 'Rapports', href: '/rapports', icon: 'chart' },
   { name: 'Admin', href: '/admin-panel', icon: 'shield', adminOnly: true },
@@ -30,12 +30,6 @@ function getIcon(icon: string, isActive: boolean) {
         </svg>
       );
     case 'car':
-          case 'users':
-            return (
-              <svg className="w-6 h-6" fill={isActive ? color : 'none'} stroke={color} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 2.5 : 2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            );
       return (
         <svg className="w-6 h-6" fill={isActive ? color : 'none'} stroke={color} viewBox="0 0 24 24">
           <path
@@ -44,6 +38,12 @@ function getIcon(icon: string, isActive: boolean) {
             strokeWidth={isActive ? 2.5 : 2}
             d="M8 17h.01M16 17h.01M3 11l1.5-5A2 2 0 016.4 4.5h11.2a2 2 0 011.9 1.5L21 11M3 11v6a1 1 0 001 1h1m16-7v6a1 1 0 01-1 1h-1m-16 0h16"
           />
+        </svg>
+      );
+    case 'users':
+      return (
+        <svg className="w-6 h-6" fill={isActive ? color : 'none'} stroke={color} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 2.5 : 2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       );
     case 'document':
@@ -104,9 +104,9 @@ export function FloatingNav() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none md:hidden">
+      <div className="fixed bottom-0 left-2 right-2 z-50 flex justify-center pointer-events-none md:hidden">
         <div
-          className="pointer-events-auto mb-5 px-3 py-2 flex items-center gap-1"
+          className="pointer-events-auto mb-5 w-full max-w-full overflow-x-auto px-2 py-2 flex items-center justify-start gap-1"
           style={{
             background: 'rgba(245, 245, 220, 0.88)',
             backdropFilter: 'blur(20px) saturate(180%)',
@@ -123,7 +123,7 @@ export function FloatingNav() {
                 key={item.name}
                 href={item.href}
                 className={clsx(
-                  'flex flex-col items-center justify-center px-4 py-2 rounded-full transition-all duration-200 min-w-[56px]',
+                  'flex shrink-0 flex-col items-center justify-center px-2 py-2 rounded-full transition-all duration-200 min-w-[52px]',
                   isActive
                     ? 'bg-primary-600/10'
                     : 'hover:bg-gray-500/10'
