@@ -68,7 +68,8 @@ export default function LocatairesPage() {
 
         {filteredLocataires && filteredLocataires.length > 0 ? (
           <div className="bg-[#f5f5dc] rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-x-auto overscroll-x-contain touch-pan-x">
+            <table className="min-w-[760px] divide-y divide-gray-200">
               <thead className="bg-[#e8e8c8]">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -116,6 +117,7 @@ export default function LocatairesPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         ) : (
           <div className="text-center py-12">

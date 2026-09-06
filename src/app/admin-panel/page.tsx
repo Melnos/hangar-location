@@ -193,8 +193,8 @@ export default function AdminPanelPage() {
             </form>
 
             <h2 className="mb-4 text-xl font-semibold">Liste des utilisateurs ({users.length})</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto overscroll-x-contain touch-pan-x">
+              <table className="min-w-[680px] w-full">
                 <thead>
                   <tr className="border-b">
                     <th className="text-left py-2">Nom</th>

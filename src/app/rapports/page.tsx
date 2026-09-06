@@ -206,7 +206,8 @@ export default function RapportsPage() {
         </div>
 
         <div className="bg-[#f5f5dc] rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto overscroll-x-contain touch-pan-x">
+          <table className="min-w-[900px] divide-y divide-gray-200">
             <thead className="bg-[#e8e8c8]">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -275,6 +276,7 @@ export default function RapportsPage() {
               })}
             </tbody>
           </table>
+          </div>
           {contratsFiltres.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-500">Aucun contrat trouvé pour ces critères</p>
